@@ -27,6 +27,7 @@ import sys
 import time
 
 import requests
+from bs4 import BeautifulSoup
 
 sys.stdout.reconfigure(encoding="utf-8")
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -171,18 +172,23 @@ def api_query(session, q, page):
 
 
 def fetch_fulltext(session, url):
+    """抓详情页正文。gov.cn 正文容器优先级：pages_content（政策库正文，单版本）
+    > 编辑器视图 > UCAP-CONTENT（通用包裹）> article > body。用 bs4 提取更稳。"""
     try:
         r = session.get(url, timeout=25)
         r.encoding = r.apparent_encoding or "utf-8"
-        html = r.text
-        # 取正文容器，去标签
-        m = re.search(r'<div[^>]*class="?(?:pages_content|TRS_Editor|article)[^"]*"?[^>]*>(.*?)</div>\s*</div>',
-                      html, re.S)
-        body = m.group(1) if m else html
-        text = re.sub(r"<script.*?</script>", "", body, flags=re.S)
-        text = re.sub(r"<style.*?</style>", "", text, flags=re.S)
-        text = re.sub(r"<[^>]+>", " ", text)
-        text = re.sub(r"\s+", " ", text).strip()
+        soup = BeautifulSoup(r.text, "lxml")
+        node = (
+            soup.find("div", class_=re.compile(r"pages_content"))
+            or soup.find("div", class_=re.compile(r"trs_editor_view|TRS_Editor|TRS_UEDITOR"))
+            or soup.find(id="UCAP-CONTENT")
+            or soup.find("div", class_=re.compile(r"\barticle\b"))
+            or soup.body
+            or soup
+        )
+        for tag in node(["script", "style"]):
+            tag.decompose()
+        text = re.sub(r"\s+", " ", node.get_text(" ", strip=True)).strip()
         return text[:20000]
     except Exception as e:  # noqa: BLE001
         log.debug("正文抓取失败 %s: %s", url, e)

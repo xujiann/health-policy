@@ -76,21 +76,32 @@ def main():
         year_count[str(r["pubyear"])] = year_count.get(str(r["pubyear"]), 0) + 1
         cat_count[r["category"]] = cat_count.get(r["category"], 0) + 1
 
-    # ---- 趋势：每个主题逐年命中数（标题+摘要匹配任一词）----
+    # ---- 趋势：分级相关性 ----
+    # 强相关（strong）：主题词命中标题 —— 这篇就是关于该主题的，几乎无“顺带提及”噪声。
+    # 弱相关（weak）  ：主题词只命中摘要、未命中标题 —— 可能相关、也可能只是顺带提及。
+    # 前端可切“仅强相关 / 标题+摘要”，对“真正相关”的趋势更可控。
     years = sorted({p["y"] for p in policies})
     trends = {"years": years, "themes": {}}
     for theme, words in THEMES.items():
-        per_year = {y: 0 for y in years}
-        ids = []
+        strong_year = {y: 0 for y in years}
+        all_year = {y: 0 for y in years}
+        n_strong = n_weak = 0
         for p in policies:
-            hay = p["t"] + " " + p["s"]
-            if any(w in hay for w in words):
-                per_year[p["y"]] += 1
-                ids.append(p["id"])
+            in_title = any(w in p["t"] for w in words)
+            in_summ = any(w in p["s"] for w in words)
+            if in_title:
+                strong_year[p["y"]] += 1
+                all_year[p["y"]] += 1
+                n_strong += 1
+            elif in_summ:
+                all_year[p["y"]] += 1
+                n_weak += 1
         trends["themes"][theme] = {
             "words": words,
-            "series": [per_year[y] for y in years],
-            "total": len(ids),
+            "series_strong": [strong_year[y] for y in years],
+            "series_all": [all_year[y] for y in years],
+            "strong": n_strong,
+            "weak": n_weak,
         }
 
     top_orgs = sorted(org_count.items(), key=lambda kv: -kv[1])[:40]
