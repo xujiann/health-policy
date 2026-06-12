@@ -10,7 +10,10 @@ param(
     [int]$Since = 2009
 )
 
-$ErrorActionPreference = "Stop"
+# 'Continue' (not 'Stop'): native commands (git/python) write normal info to stderr;
+# with 'Stop' + 2>&1 that gets turned into a terminating NativeCommandError and aborts
+# the script mid-push. We check $LASTEXITCODE explicitly after each native call instead.
+$ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $root
 
@@ -39,16 +42,17 @@ if ($LASTEXITCODE -ne 0) { "build FAILED exit=$LASTEXITCODE" | Tee-Object -FileP
 # 3) optional: push data to GitHub so Pages redeploys
 if ($Push) {
     "[{0}] pushing to GitHub..." -f (Get-Date) | Tee-Object -FilePath $log -Append
-    & git add site/data 2>&1 | Tee-Object -FilePath $log -Append
+    & git add site/data 2>&1 | Out-Null
     $changed = & git status --porcelain site/data
     if ($changed) {
         $msg = "Auto data update " + (Get-Date -Format "yyyy-MM-dd")
-        & git commit -m $msg 2>&1 | Tee-Object -FilePath $log -Append
-        & git push origin main 2>&1 | Tee-Object -FilePath $log -Append
-        if ($LASTEXITCODE -eq 0) {
+        (& git commit -m $msg 2>&1 | Out-String).Trim() | Tee-Object -FilePath $log -Append
+        (& git push origin main 2>&1 | Out-String).Trim() | Tee-Object -FilePath $log -Append
+        $code = $LASTEXITCODE
+        if ($code -eq 0) {
             "push done; GitHub Pages will redeploy in ~1 min" | Tee-Object -FilePath $log -Append
         } else {
-            "push FAILED exit=$LASTEXITCODE" | Tee-Object -FilePath $log -Append
+            "push FAILED exit=$code" | Tee-Object -FilePath $log -Append
         }
     } else {
         "no data change; nothing to push" | Tee-Object -FilePath $log -Append
