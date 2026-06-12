@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>卫生健康政策库 · 检索与趋势分析</title>
+<link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>卫生健康政策库</h1>
+    <p class="sub">汇集 2009 年新医改以来的国家卫生健康政策，支持全文检索、多维筛选与关键词趋势分析</p>
+    <nav class="tabs">
+      <button class="tab active" data-view="browse">政策检索</button>
+      <button class="tab" data-view="trend">趋势分析</button>
+      <button class="tab" data-view="about">关于</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 加载状态 -->
+  <div id="loading" class="loading">正在加载政策数据…</div>
+
+  <!-- ============ 政策检索 ============ -->
+  <section id="view-browse" class="view">
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="搜索标题 / 文号 / 摘要，如：分级诊疗、国办发〔2024〕…">
+      <select id="f-year"><option value="">全部年份</option></select>
+      <select id="f-cat"><option value="">全部类别</option></select>
+      <select id="f-org"><option value="">全部机关</option></select>
+      <select id="f-sort">
+        <option value="date_desc">最新优先</option>
+        <option value="date_asc">最早优先</option>
+      </select>
+    </div>
+    <div id="result-info" class="result-info"></div>
+    <ul id="list" class="list"></ul>
+    <div id="pager" class="pager"></div>
+  </section>
+
+  <!-- ============ 趋势分析 ============ -->
+  <section id="view-trend" class="view hidden">
+    <div class="trend-intro">
+      <p>下图统计各主题每年新发政策数量，反映政策关注度的变化。点击图例可隐藏/显示曲线；选择主题查看其命中政策列表。
+         也可在下方输入<strong>任意关键词</strong>即时生成逐年曲线（虚线 ★），与预置主题对比。</p>
+    </div>
+    <div class="custom-kw">
+      <input id="kw-input" type="text" placeholder="输入任意关键词，如：罕见病、生育保险、DRG（多个词用逗号=任一命中）">
+      <button id="kw-add">＋ 加入对比</button>
+      <label class="preset-toggle"><input type="checkbox" id="show-presets" checked> 显示预置主题</label>
+      <div id="kw-chips" class="kw-chips"></div>
+    </div>
+    <div class="chart-box"><canvas id="chart"></canvas></div>
+    <div class="theme-detail">
+      <label>查看主题命中政策：
+        <select id="theme-pick"></select>
+      </label>
+      <span id="theme-count" class="muted"></span>
+    </div>
+    <ul id="theme-list" class="list"></ul>
+  </section>
+
+  <!-- ============ 关于 ============ -->
+  <section id="view-about" class="view hidden">
+    <div class="about">
+      <h2>关于本站</h2>
+      <p id="about-stats" class="muted"></p>
+      <h3>数据来源</h3>
+      <p>数据来自<strong>中国政府网政策文件库</strong>（sousuo.www.gov.cn）统一检索接口，覆盖四类：</p>
+      <ul>
+        <li><strong>国务院公文</strong>——国发、国办发等，历史可回溯至 1990 年代</li>
+        <li><strong>部门文件</strong>——国家卫生健康委、国家医保局、国家药监局等部委文件</li>
+        <li><strong>其他文件</strong>与<strong>国务院公报</strong></li>
+      </ul>
+      <h3>采集方式</h3>
+      <p>按卫生健康领域的种子关键词（医改、公共卫生、疾控、分级诊疗、药品集采、医保、中医药……）
+         做<strong>标题检索</strong>，再经相关性过滤剔除宽松匹配的误中项（如「兽医管理体制改革」），
+         按文档去重后增量入库。原文链接均指向政府网官方页面。</p>
+      <h3>趋势口径</h3>
+      <p>趋势曲线按「标题或摘要命中主题关键词」逐年计数，反映相对变化趋势，
+         并非该主题政策的绝对全集，仅供研究参考。</p>
+      <h3>免责声明</h3>
+      <p>本站为政策研究辅助工具，内容以政府网官方原文为准。</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <span id="foot-meta"></span>
+</footer>
+
+<script src="vendor/chart.umd.min.js"></script>
+<script src="app.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+:root{
+  --bg:#f5f7fa; --card:#fff; --ink:#1f2937; --muted:#6b7280;
+  --line:#e5e7eb; --brand:#0b6e5f; --brand-d:#085145; --accent:#1d6fb8;
+  --chip:#eef4f3;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Microsoft YaHei","PingFang SC",system-ui,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.top{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:22px 0 0}
+.top h1{margin:0;font-size:26px;letter-spacing:1px}
+.top .sub{margin:6px 0 14px;opacity:.9;font-size:14px}
+.tabs{display:flex;gap:4px}
+.tab{background:transparent;border:none;color:#d8efe9;padding:10px 18px;font-size:15px;
+  cursor:pointer;border-radius:8px 8px 0 0}
+.tab:hover{color:#fff}
+.tab.active{background:var(--bg);color:var(--brand-d);font-weight:600}
+
+main{min-height:60vh;padding-top:18px}
+.loading{padding:40px;text-align:center;color:var(--muted)}
+.hidden{display:none}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
+  font-size:14px;background:var(--card)}
+.toolbar input#q{flex:1;min-width:240px}
+.result-info{color:var(--muted);font-size:13px;margin-bottom:10px}
+
+.list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.item h3{margin:0 0 6px;font-size:16px;font-weight:600}
+.item h3 a{color:var(--ink)}
+.item h3 a:hover{color:var(--brand)}
+.item .meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.item .chip{background:var(--chip);color:var(--brand-d);padding:1px 8px;border-radius:20px}
+.item .summary{font-size:13px;color:#4b5563;margin:6px 0 0}
+.item mark{background:#fff2a8;padding:0 1px}
+
+.pager{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:20px 0}
+.pager button{padding:6px 12px;border:1px solid var(--line);background:var(--card);
+  border-radius:6px;cursor:pointer;font-size:13px}
+.pager button.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pager button:disabled{opacity:.4;cursor:default}
+
+.chart-box{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:16px;height:440px}
+.trend-intro p{color:var(--muted);font-size:14px}
+
+.custom-kw{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+.custom-kw input#kw-input{flex:1;min-width:260px;padding:9px 12px;border:1px solid var(--line);
+  border-radius:8px;font-size:14px;background:var(--card)}
+.custom-kw button#kw-add{padding:9px 16px;border:none;border-radius:8px;background:var(--brand);
+  color:#fff;font-size:14px;cursor:pointer}
+.custom-kw button#kw-add:hover{background:var(--brand-d)}
+.preset-toggle{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer}
+.kw-chips{display:flex;gap:8px;flex-wrap:wrap;width:100%}
+.kw-chips .kwchip{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 10px;
+  border-radius:20px;font-size:13px;color:#fff}
+.kw-chips .kwchip button{background:rgba(255,255,255,.35);border:none;color:#fff;width:18px;height:18px;
+  border-radius:50%;cursor:pointer;line-height:1;font-size:13px}
+.kw-chips .kwchip button:hover{background:rgba(0,0,0,.25)}
+.theme-detail{margin:18px 0 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.theme-detail select{padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+.muted{color:var(--muted);font-size:13px}
+
+.about{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 24px 24px}
+.about h2{color:var(--brand-d)}
+.about h3{margin-top:22px;color:var(--brand-d);font-size:16px}
+
+.foot{padding:24px 16px 40px;color:var(--muted);font-size:12px;text-align:center}
+
+@media(max-width:600px){
+  .top h1{font-size:21px}
+  .toolbar input#q{min-width:100%}
+}
