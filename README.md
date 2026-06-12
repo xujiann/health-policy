@@ -87,21 +87,30 @@ Register-ScheduledTask -TaskName "HealthPolicyDaily" -Action $action -Trigger $t
   -Description "每日更新卫生健康政策库"
 ```
 
-## 部署到 GitHub Pages
+## 部署到 GitHub Pages（已上线）
 
-网站是纯静态的，发布 `site/` 目录即可：
+- **线上地址：https://xujiann.github.io/health-policy/**
+- 仓库：`xujiann/health-policy`（Public）
 
-1. 新建 GitHub 仓库，把本项目推上去（`policies.db`、`logs/` 已在 `.gitignore` 中忽略，
-   但 `site/data/*.json` **会**一起提交 —— 那是网站的数据）。
-2. 仓库 **Settings → Pages**：
-   - Source 选 **Deploy from a branch**
-   - Branch 选 `main`，目录选 **`/site`**（若选项里没有子目录，见下方备选）
-3. 等几分钟，访问 `https://<用户名>.github.io/<仓库名>/` 即可。
+部署方式用 **GitHub Actions**（`.github/workflows/deploy.yml`）：每次 push 到 `main`
+会自动把 `site/` 目录发布到 Pages，无需手动操作，也不必把站点放进 `/docs`。
+Pages 源已设为 **GitHub Actions**（`build_type=workflow`）。
 
-**备选（Pages 只能选仓库根目录或 `/docs` 时）**：把 `site` 改名为 `docs`，
-并相应改 `serve.ps1` / `launch.json` 里的目录；或加一个 GitHub Actions 工作流发布 `site/`。
+> `policies.db`、`logs/` 已在 `.gitignore` 中忽略；`site/data/*.json`（网站数据）会一起提交。
 
-> 每次更新数据后，重新 `git add site/data && git commit && git push`，Pages 会自动刷新。
+### 上线后自动更新
+
+每日计划任务 `HealthPolicyDaily`（08:40）跑的是 `run_update.ps1 -Push`：
+采集 → 建站 → 若 `site/data` 有变化则自动 `git commit && git push` → Actions 自动重新部署。
+**整条链路全自动**，本地数据更新后线上站点约 1 分钟内刷新。
+
+手动更新并上线：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File run_update.ps1 -Push
+```
+
+（不加 `-Push` 则只更新本地、不推送。）
 
 ## 常见问题
 

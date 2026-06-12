@@ -6,6 +6,7 @@
 
 param(
     [switch]$Fulltext,
+    [switch]$Push,        # after build, commit site/data and push to GitHub (Pages auto-redeploys)
     [int]$Since = 2009
 )
 
@@ -34,6 +35,25 @@ if ($LASTEXITCODE -ne 0) { "harvest FAILED exit=$LASTEXITCODE" | Tee-Object -Fil
 # 2) build site JSON
 & $py "build_site.py" 2>&1 | Tee-Object -FilePath $log -Append
 if ($LASTEXITCODE -ne 0) { "build FAILED exit=$LASTEXITCODE" | Tee-Object -FilePath $log -Append; exit 1 }
+
+# 3) optional: push data to GitHub so Pages redeploys
+if ($Push) {
+    "[{0}] pushing to GitHub..." -f (Get-Date) | Tee-Object -FilePath $log -Append
+    & git add site/data 2>&1 | Tee-Object -FilePath $log -Append
+    $changed = & git status --porcelain site/data
+    if ($changed) {
+        $msg = "Auto data update " + (Get-Date -Format "yyyy-MM-dd")
+        & git commit -m $msg 2>&1 | Tee-Object -FilePath $log -Append
+        & git push origin main 2>&1 | Tee-Object -FilePath $log -Append
+        if ($LASTEXITCODE -eq 0) {
+            "push done; GitHub Pages will redeploy in ~1 min" | Tee-Object -FilePath $log -Append
+        } else {
+            "push FAILED exit=$LASTEXITCODE" | Tee-Object -FilePath $log -Append
+        }
+    } else {
+        "no data change; nothing to push" | Tee-Object -FilePath $log -Append
+    }
+}
 
 "[{0}] update done. Open site with serve.ps1" -f (Get-Date) | Tee-Object -FilePath $log -Append
 
