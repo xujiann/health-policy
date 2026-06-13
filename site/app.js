@@ -68,23 +68,29 @@ function initFilters() {
   m.top_orgs.forEach(([org, n]) => {
     orgSel.insertAdjacentHTML("beforeend", `<option value="${esc(org)}">${esc(org)}（${n}）</option>`);
   });
+  const thSel = $("#f-theme");
+  (m.theme_facet || []).forEach(([name, n]) => {
+    if (n > 0) thSel.insertAdjacentHTML("beforeend", `<option value="${esc(name)}">${esc(name)}（${n}）</option>`);
+  });
 }
 
 function initBrowse() {
   let timer;
   $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(applyFilters, 200); });
-  ["#f-year", "#f-cat", "#f-org", "#f-sort"].forEach((s) =>
+  ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-sort"].forEach((s) =>
     $(s).addEventListener("change", applyFilters));
 }
 
 function applyFilters() {
   const q = $("#q").value.trim().toLowerCase();
   const y = $("#f-year").value, c = $("#f-cat").value, o = $("#f-org").value;
+  const th = $("#f-theme").value;
   const sort = $("#f-sort").value;
   let arr = state.policies.filter((p) => {
     if (y && String(p.y) !== y) return false;
     if (c && p.c !== c) return false;
     if (o && p.ogk !== o) return false;
+    if (th && !(p.th || []).includes(th)) return false;
     if (q) {
       const hay = (p.t + " " + p.pc + " " + p.s + " " + p.og).toLowerCase();
       if (!hay.includes(q)) return false;
@@ -105,18 +111,19 @@ function highlight(text, q) {
     "</mark>" + esc(text.slice(i + q.length));
 }
 
-function itemHTML(p, q, badge) {
+function itemHTML(p, q) {
   const cat = state.meta.cat_label[p.c] || p.c;
-  const badgeHtml = badge ? `<span class="chip rel-${badge.cls}">${badge.text}</span>` : "";
   const meta = [
     `<span class="chip">${esc(cat)}</span>`,
     p.d ? `<span>${esc(p.d)}</span>` : "",
     p.pc ? `<span>${esc(p.pc)}</span>` : "",
     p.og ? `<span>${esc(p.og)}</span>` : "",
   ].filter(Boolean).join("");
+  const themes = (p.th || []).map((t) => `<span class="th-chip">${esc(t)}</span>`).join("");
   return `<li class="item">
     <h3><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(p.t, q)}</a></h3>
-    <div class="meta">${badgeHtml}${meta}</div>
+    <div class="meta">${meta}</div>
+    ${themes ? `<div class="th-row">${themes}</div>` : ""}
     ${p.s ? `<p class="summary">${highlight(p.s, q)}…</p>` : ""}
   </li>`;
 }
@@ -242,10 +249,11 @@ function buildDatasets() {
   const tr = state.trends;
   const presets = state.showPresets ? Object.entries(tr.themes).map(([name, d], i) => ({
     label: name,
-    data: state.relMode === "strong" ? d.series_strong : d.series_all,
+    data: d.series,
     borderColor: PALETTE[i % PALETTE.length],
     backgroundColor: PALETTE[i % PALETTE.length],
     tension: 0.3, borderWidth: 2, pointRadius: 2,
+    hidden: i >= 8,
   })) : [];
   const customs = state.customLines.map((c) => ({
     label: "★" + c.label,
@@ -258,9 +266,7 @@ function buildDatasets() {
 }
 
 function chartTitle() {
-  return state.relMode === "strong"
-    ? "卫生健康主题政策数量逐年变化（仅标题强相关）"
-    : "卫生健康主题政策数量逐年变化（标题+摘要）";
+  return "卫生健康主题政策数量逐年变化（AI 主题标签）";
 }
 
 function drawChart() {
@@ -287,21 +293,13 @@ function refreshChart() {
 }
 
 function renderThemeList(theme) {
-  const words = state.trends.themes[theme].words;
-  const mode = state.relMode;
-  const hits = [];
-  for (const p of state.policies) {
-    const h = hitMode(p, words, mode);
-    if (h) hits.push({ p, h });
-  }
-  hits.sort((a, b) => b.p.d.localeCompare(a.p.d));
-  const modeLabel = mode === "strong" ? "仅标题强相关" : "标题+摘要";
+  const hits = state.policies.filter((p) => (p.th || []).includes(theme));
+  hits.sort((a, b) => b.d.localeCompare(a.d));
+  const desc = state.trends.themes[theme] && state.trends.themes[theme].desc || "";
   $("#theme-count").textContent =
-    `「${theme}」命中 ${hits.length} 篇（${modeLabel}；关键词：${words.join("、")}），列出最近 50 篇`;
-  $("#theme-list").innerHTML = hits.slice(0, 50).map(({ p, h }) =>
-    itemHTML(p, "", h === "strong"
-      ? { cls: "strong", text: "标题强相关" }
-      : { cls: "weak", text: "摘要弱相关" })).join("");
+    `「${theme}」共 ${hits.length} 篇（AI 主题标签）。${desc}`;
+  $("#theme-list").innerHTML = hits.slice(0, 50).map((p) => itemHTML(p, "")).join("") ||
+    `<li class="item muted">该主题暂无打标政策（可能还在打标中）。</li>`;
 }
 
 /* ---------- About ---------- */
