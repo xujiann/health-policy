@@ -18,23 +18,29 @@ $log = Join-Path $logDir ("tagloop_" + (Get-Date -Format "yyyy-MM-dd_HHmmss") + 
 
 "[{0}] tag-loop start" -f (Get-Date) | Tee-Object -FilePath $log
 
+$countCmd = "import sqlite3;print(sqlite3.connect('policies.db').execute('SELECT COUNT(*) FROM tag_status').fetchone()[0])"
+$before = & $py -c $countCmd
+
 # 1) tag one usage window (stops gracefully on session limit)
 & $py "tag_policies.py" --batch 20 2>&1 | Tee-Object -FilePath $log -Append
+$after = & $py -c $countCmd
 
-# 2) rebuild site data
-& $py "build_site.py" 2>&1 | Tee-Object -FilePath $log -Append
-
-# 3) push if site/data changed
-& git add site/data 2>&1 | Out-Null
-$changed = & git status --porcelain site/data
-if ($changed) {
-    $msg = "Auto tag+build " + (Get-Date -Format "yyyy-MM-dd_HH")
-    (& git commit -m $msg 2>&1 | Out-String).Trim() | Tee-Object -FilePath $log -Append
-    (& git push origin main 2>&1 | Out-String).Trim() | Tee-Object -FilePath $log -Append
-    if ($LASTEXITCODE -eq 0) { "push done" | Tee-Object -FilePath $log -Append }
-    else { "push FAILED exit=$LASTEXITCODE" | Tee-Object -FilePath $log -Append }
+# 2) only rebuild+push when new tags were added (avoid empty built_at commits)
+if ("$after" -eq "$before") {
+    "no new tags this run; skip build/push" | Tee-Object -FilePath $log -Append
 } else {
-    "no data change; nothing to push" | Tee-Object -FilePath $log -Append
+    & $py "build_site.py" 2>&1 | Tee-Object -FilePath $log -Append
+    & git add site/data 2>&1 | Out-Null
+    $changed = & git status --porcelain site/data
+    if ($changed) {
+        $msg = "Auto tag+build " + (Get-Date -Format "yyyy-MM-dd_HH")
+        (& git commit -m $msg 2>&1 | Out-String).Trim() | Tee-Object -FilePath $log -Append
+        (& git push origin main 2>&1 | Out-String).Trim() | Tee-Object -FilePath $log -Append
+        if ($LASTEXITCODE -eq 0) { "push done" | Tee-Object -FilePath $log -Append }
+        else { "push FAILED exit=$LASTEXITCODE" | Tee-Object -FilePath $log -Append }
+    } else {
+        "no data change; nothing to push" | Tee-Object -FilePath $log -Append
+    }
 }
 
 # report remaining backlog
