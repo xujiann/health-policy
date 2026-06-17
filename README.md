@@ -11,12 +11,14 @@
 
 ```
 health-policy/
-├── keywords.py        # 种子关键词 + 趋势主题（想扩库就改这里）
+├── keywords.py        # 种子关键词 SEED_KEYWORDS + AI 打标主题 TAG_THEMES
 ├── harvest.py         # 采集器：从中国政府网政策文件库抓取并入 SQLite
+├── tag_policies.py    # 用 Claude CLI 给政策打多标签主题（断点续跑）
 ├── build_site.py      # 把 SQLite 导出成网站用的 JSON 数据包
-├── run_update.ps1     # 一键「采集 + 建站」（可设每日计划任务）
+├── run_update.ps1     # 一键「采集 + 建站(+推送)」（每日计划任务 HealthPolicyDaily）
+├── tag_loop.ps1       # 「打标 + 建站 + 推送」（计划任务 HealthPolicyTagging，每 5.5h）
 ├── serve.ps1          # 本地起服务并打开浏览器
-├── policies.db        # SQLite 语料库（自动生成，不进 git）
+├── policies.db        # SQLite 语料库 + policy_themes 标签表（自动生成，不进 git）
 └── site/              # 静态网站（部署 GitHub Pages 时发布这个目录）
     ├── index.html
     ├── app.js
@@ -60,11 +62,29 @@ powershell -ExecutionPolicy Bypass -File serve.ps1
 > 卫健委官网（nhc.gov.cn）本身有 WZWS 反爬盾，直连会被 412 拦截；
 > 政府网政策库已聚合了卫健委发布的文件，故以政府网为统一入口。
 
-## 趋势分析口径
+## 趋势分析口径（AI 主题打标）
 
-「趋势分析」页按**标题或摘要命中主题关键词**逐年计数，反映各主题政策关注度的
-**相对变化**。主题与命中词在 `keywords.py` 的 `THEMES` 里定义，可自行增删。
-这是研究参考口径，并非该主题政策的绝对全集。
+「趋势分析」页的预置主题曲线基于 **AI 主题打标**：`tag_policies.py` 调用 Claude CLI
+逐篇阅读标题+摘要，从 `keywords.py` 的 `TAG_THEMES`（20 个受控主题）里判定每条政策
+**真正属于哪些主题**（多标签），结果存入 `policy_themes` 表，趋势按标签逐年计数。
+
+相比字面词匹配，能排除「顺带提及」、归并同义说法、识别综合性文件涉及的多个子领域，
+更接近「真正相关」。检索页也可按 AI 主题筛选。
+
+> 为什么不用全文：gov.cn 大量历史/解读页正文是 JS 动态渲染，`requests` 抓不到
+> （最大文本块仅约 42 字），故以「标题+摘要喂 LLM」判主题，既准又可行。
+
+前端的「自定义关键词」仍是浏览器端实时词匹配（`THEMES` 也仅用于此），与 AI 标签互补。
+
+### 打标用法
+
+```powershell
+python tag_policies.py            # 给未打标政策打标（断点续跑）
+python tag_policies.py --retag    # 改了 TAG_THEMES 后全量重打
+```
+
+> Claude 订阅有 5 小时滚动用量限额，一个窗口约能打 330 篇；超出会报 `session limit`，
+> 脚本会优雅停止并保存进度，额度重置后再跑即自动续打。
 
 ## 扩展语料 / 自定义主题
 
@@ -77,15 +97,16 @@ powershell -ExecutionPolicy Bypass -File serve.ps1
 可选：`run_update.ps1 -Fulltext` 会额外抓取每篇政策的正文（较慢，适合夜间），
 正文入库后可支撑更细的全文分析。
 
-## 设为每日自动更新（可选）
+## 自动更新（已配置两个计划任务）
 
-```powershell
-$action  = New-ScheduledTaskAction -Execute "powershell.exe" `
-  -Argument "-ExecutionPolicy Bypass -File `"$PWD\run_update.ps1`""
-$trigger = New-ScheduledTaskTrigger -Daily -At 8:30am
-Register-ScheduledTask -TaskName "HealthPolicyDaily" -Action $action -Trigger $trigger `
-  -Description "每日更新卫生健康政策库"
-```
+| 任务 | 频率 | 做什么 |
+|------|------|--------|
+| `HealthPolicyDaily` | 每天 08:40 | `run_update.ps1 -Push`：采集新政策 → 建站 → 推送 |
+| `HealthPolicyTagging` | 每 5.5 小时 | `tag_loop.ps1`：给未打标政策打标 → 建站 → 推送 |
+
+两者配合：Daily 采集、Tagging 给新政策打标，数据变化后自动推送，GitHub Actions
+重新部署，线上约 1 分钟刷新。存量首次打标受订阅限额需分多个窗口（约 1–2 天）完成，
+之后 Tagging 每轮只处理当天新增的少量政策。
 
 ## 部署到 GitHub Pages（已上线）
 
