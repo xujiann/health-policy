@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>卫生健康政策库 · 检索与趋势分析</title>
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <header class="top">
@@ -58,6 +58,7 @@
       <input id="kw-input" type="text" placeholder="输入任意关键词，如：罕见病、生育保险、DRG（多个词用逗号=任一命中）">
       <button id="kw-add">＋ 加入对比</button>
       <label class="preset-toggle"><input type="checkbox" id="show-presets" checked> 显示预置主题</label>
+      <div id="kw-suggest" class="kw-suggest"></div>
       <div id="kw-chips" class="kw-chips"></div>
     </div>
     <div class="chart-box"><canvas id="chart"></canvas></div>
@@ -102,6 +103,6 @@
 </footer>
 
 <script src="vendor/chart.umd.min.js"></script>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

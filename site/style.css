@@ -66,6 +66,10 @@ main{min-height:60vh;padding-top:18px}
   color:#fff;font-size:14px;cursor:pointer}
 .custom-kw button#kw-add:hover{background:var(--brand-d)}
 .preset-toggle{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer}
+.kw-suggest{width:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.kw-suggest .sugg{padding:3px 10px;border:1px solid var(--line);border-radius:20px;
+  background:#f0f6ff;color:#1d4ed8;font-size:12px;cursor:pointer}
+.kw-suggest .sugg:hover{background:#dbeafe}
 .kw-chips{display:flex;gap:8px;flex-wrap:wrap;width:100%}
 .kw-chips .kwchip{display:inline-flex;align-items:center;gap:6px;padding:3px 6px 3px 10px;
   border-radius:20px;font-size:13px;color:#fff}

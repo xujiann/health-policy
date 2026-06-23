@@ -180,6 +180,7 @@ function initTrend() {
   const add = () => addCustomKeyword($("#kw-input").value);
   $("#kw-add").addEventListener("click", add);
   $("#kw-input").addEventListener("keydown", (e) => { if (e.key === "Enter") add(); });
+  $("#kw-input").addEventListener("input", updateSuggest);
   $("#show-presets").addEventListener("change", (e) => {
     state.showPresets = e.target.checked;
     refreshChart();
@@ -193,6 +194,36 @@ function initTrend() {
       renderChips();
       renderThemeList($("#theme-pick").value);
     }));
+}
+
+// 自定义词 → 相关 AI 主题联想（静态站内的“语义桥接”：把任意输入词引导到最相关的主题曲线）
+function suggestThemes(text) {
+  const t = (text || "").trim();
+  if (t.length < 2) return [];
+  return Object.keys(state.trends.themes).filter((name) =>
+    name.includes(t) || (state.trends.themes[name].desc || "").includes(t));
+}
+
+function updateSuggest() {
+  const box = $("#kw-suggest");
+  const ms = suggestThemes($("#kw-input").value);
+  if (!ms.length) { box.innerHTML = ""; return; }
+  box.innerHTML = '<span class="muted">相关 AI 主题：</span>' +
+    ms.slice(0, 4).map((n) => `<button class="sugg" data-th="${esc(n)}">${esc(n)} ↗</button>`).join("");
+  box.querySelectorAll("button[data-th]").forEach((b) =>
+    b.addEventListener("click", () => showThemeLine(b.dataset.th)));
+}
+
+// 在图中高亮某个 AI 主题曲线（取消其默认隐藏），并滚动到图表
+function showThemeLine(name) {
+  if (!$("#show-presets").checked) { $("#show-presets").checked = true; state.showPresets = true; }
+  refreshChart();
+  if (state.chart) {
+    const ds = state.chart.data.datasets.find((d) => d.label === name);
+    if (ds) { ds.hidden = false; state.chart.update(); }
+  }
+  const box = document.querySelector(".chart-box");
+  if (box) box.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 // 某篇政策是否命中某组词；mode='strong' 只看标题，'all' 看标题+摘要
