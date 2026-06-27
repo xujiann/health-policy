@@ -86,7 +86,39 @@ main{min-height:60vh;padding-top:18px}
 
 .foot{padding:24px 16px 40px;color:var(--muted);font-size:12px;text-align:center}
 
-@media(max-width:600px){
-  .top h1{font-size:21px}
-  .toolbar input#q{min-width:100%}
+@media(max-width:640px){
+  .wrap{padding:0 12px}
+  .top{padding:18px 0 0}
+  .top h1{font-size:20px;letter-spacing:.5px}
+  .top .sub{font-size:13px;margin:5px 0 12px}
+  .tab{padding:9px 13px;font-size:14px}
+
+  /* 筛选：搜索框整行，下拉两列自适应，排序单独整行 */
+  .toolbar{gap:8px}
+  .toolbar input#q{flex:1 1 100%;min-width:0}
+  .toolbar select{flex:1 1 calc(50% - 4px);min-width:0;font-size:13px;padding:9px 8px}
+  .toolbar #f-sort{flex-basis:100%}
+
+  .item{padding:12px 13px}
+  .item h3{font-size:15px}
+  .item .summary{font-size:13px}
+
+  /* 图表：略高以容纳多主题图例，左右内边距收紧 */
+  .chart-box{height:460px;padding:12px 6px}
+  .trend-intro p{font-size:13px}
+
+  .custom-kw{gap:8px}
+  .custom-kw input#kw-input{flex:1 1 100%;min-width:0}
+  .custom-kw button#kw-add{flex:1 1 auto}
+  .preset-toggle{flex-basis:100%}
+
+  .theme-detail{gap:8px}
+  .theme-detail label{flex:1 1 100%}
+  .theme-detail select{width:100%}
+
+  /* 触摸目标更大 */
+  .pager button{padding:9px 14px;font-size:14px}
+
+  .about{padding:6px 16px 20px}
+  .about h3{font-size:15px}
 }

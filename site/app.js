@@ -296,8 +296,12 @@ function buildDatasets() {
   return presets.concat(customs);
 }
 
+function smallScreen() { return window.innerWidth <= 640; }
+
 function chartTitle() {
-  return "卫生健康主题政策数量逐年变化（AI 主题标签）";
+  return smallScreen()
+    ? "主题政策逐年变化（AI 标签）"
+    : "卫生健康主题政策数量逐年变化（AI 主题标签）";
 }
 
 function drawChart() {
@@ -308,7 +312,10 @@ function drawChart() {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
       plugins: {
-        legend: { position: "bottom", labels: { boxWidth: 14, font: { size: 12 } } },
+        legend: { position: "bottom", labels: {
+          boxWidth: smallScreen() ? 10 : 14,
+          padding: smallScreen() ? 6 : 10,
+          font: { size: smallScreen() ? 11 : 12 } } },
         title: { display: true, text: chartTitle() },
       },
       scales: { y: { beginAtZero: true, title: { display: true, text: "政策数（篇）" } } },
