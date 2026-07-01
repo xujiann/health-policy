@@ -24,7 +24,12 @@ async function boot() {
       loadJSON("data/trends.json"),
       loadJSON("data/meta.json"),
     ]);
-    state.policies = pol; state.trends = tr; state.meta = meta;
+    state.policies = pol.map((p) => ({
+      ...p,
+      tx: window.POLICY_TAXONOMY?.classify(p) || null
+    }));
+    state.trends = tr;
+    state.meta = meta;
     $("#loading").classList.add("hidden");
     initFilters();
     initTabs();
@@ -76,27 +81,103 @@ function initFilters() {
   (m.theme_facet || []).forEach(([name, n]) => {
     if (n > 0) thSel.insertAdjacentHTML("beforeend", `<option value="${esc(name)}">${esc(name)}（${n}）</option>`);
   });
+  renderMinistryOptions();
+  renderBureauOptions();
+  renderOfficeOptions();
 }
 
 function initBrowse() {
   let timer;
   $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(applyFilters, 200); });
-  ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-sort"].forEach((s) =>
+  ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-office", "#f-sort"].forEach((s) =>
     $(s).addEventListener("change", applyFilters));
+  $("#f-ministry").addEventListener("change", () => {
+    $("#f-bureau").value = "";
+    $("#f-office").value = "";
+    renderBureauOptions();
+    renderOfficeOptions();
+    applyFilters();
+  });
+  $("#f-bureau").addEventListener("change", () => {
+    $("#f-office").value = "";
+    renderOfficeOptions();
+    applyFilters();
+  });
+}
+
+function countBy(items, keyFn) {
+  const counts = new Map();
+  items.forEach((item) => {
+    const keys = keyFn(item);
+    (Array.isArray(keys) ? keys : [keys]).filter(Boolean).forEach((key) =>
+      counts.set(key, (counts.get(key) || 0) + 1));
+  });
+  return counts;
+}
+
+function renderMinistryOptions() {
+  const tx = window.POLICY_TAXONOMY;
+  const sel = $("#f-ministry");
+  const current = sel.value;
+  const counts = countBy(state.policies, (p) => p.tx?.ministryIds || []);
+  sel.innerHTML = `<option value="">全部部委</option>` + tx.ministries
+    .filter((item) => counts.get(item.id))
+    .map((item) => `<option value="${esc(item.id)}">${esc(item.name)}（${counts.get(item.id)}）</option>`)
+    .join("");
+  sel.value = [...sel.options].some((option) => option.value === current) ? current : "";
+}
+
+function renderBureauOptions() {
+  const tx = window.POLICY_TAXONOMY;
+  const ministryId = $("#f-ministry").value;
+  const sel = $("#f-bureau");
+  const current = sel.value;
+  const pool = state.policies.filter((p) => !ministryId || (p.tx?.ministryIds || []).includes(ministryId));
+  const counts = countBy(pool, (p) => p.tx?.bureauId);
+  const candidates = tx.bureausFor(ministryId).filter((item) => counts.get(item.id));
+  sel.innerHTML = `<option value="">全部司局</option>` + candidates
+    .map((item) => `<option value="${esc(item.id)}">${esc(item.name)}（${counts.get(item.id)}）</option>`)
+    .join("");
+  sel.value = [...sel.options].some((option) => option.value === current) ? current : "";
+}
+
+function renderOfficeOptions() {
+  const tx = window.POLICY_TAXONOMY;
+  const ministryId = $("#f-ministry").value;
+  const bureauId = $("#f-bureau").value;
+  const sel = $("#f-office");
+  const current = sel.value;
+  const pool = state.policies.filter((p) => {
+    if (ministryId && !(p.tx?.ministryIds || []).includes(ministryId)) return false;
+    if (bureauId && p.tx?.bureauId !== bureauId) return false;
+    return true;
+  });
+  const counts = countBy(pool, (p) => p.tx?.office);
+  const officeNames = bureauId
+    ? tx.officesFor(bureauId).filter((name) => counts.get(name))
+    : [...counts.keys()].sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
+  sel.innerHTML = `<option value="">全部处室</option>` + officeNames
+    .map((name) => `<option value="${esc(name)}">${esc(name)}（${counts.get(name)}）</option>`)
+    .join("");
+  sel.value = [...sel.options].some((option) => option.value === current) ? current : "";
 }
 
 function applyFilters() {
   const q = $("#q").value.trim().toLowerCase();
   const y = $("#f-year").value, c = $("#f-cat").value, o = $("#f-org").value;
   const th = $("#f-theme").value;
+  const ministry = $("#f-ministry").value, bureau = $("#f-bureau").value, office = $("#f-office").value;
   const sort = $("#f-sort").value;
   let arr = state.policies.filter((p) => {
     if (y && String(p.y) !== y) return false;
     if (c && p.c !== c) return false;
     if (o && p.ogk !== o) return false;
     if (th && !(p.th || []).includes(th)) return false;
+    if (ministry && !(p.tx?.ministryIds || []).includes(ministry)) return false;
+    if (bureau && p.tx?.bureauId !== bureau) return false;
+    if (office && p.tx?.office !== office) return false;
     if (q) {
-      const hay = (p.t + " " + p.pc + " " + p.s + " " + p.og).toLowerCase();
+      const hay = (p.t + " " + p.pc + " " + p.s + " " + p.og + " " + taxonomyText(p)).toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -105,6 +186,11 @@ function applyFilters() {
   state.filtered = arr;
   state.page = 1;
   renderList();
+}
+
+function taxonomyText(p) {
+  if (!p.tx) return "";
+  return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment}`;
 }
 
 function highlight(text, q) {
@@ -124,12 +210,21 @@ function itemHTML(p, q) {
     p.og ? `<span>${esc(p.og)}</span>` : "",
   ].filter(Boolean).join("");
   const themes = (p.th || []).map((t) => `<span class="th-chip">${esc(t)}</span>`).join("");
+  const taxonomy = p.tx
+    ? `<div class="tax-row"><span>${esc(p.tx.ministryName)}</span><span>${esc(p.tx.bureauName)}</span><span>${esc(p.tx.office)}</span><em>${esc(p.tx.assignment)}</em></div>`
+    : "";
   return `<li class="item">
     <h3><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(p.t, q)}</a></h3>
     <div class="meta">${meta}</div>
+    ${taxonomy}
     ${themes ? `<div class="th-row">${themes}</div>` : ""}
     ${p.s ? `<p class="summary">${highlight(p.s, q)}…</p>` : ""}
   </li>`;
+}
+
+function hasActiveBrowseFilter(q) {
+  return q || ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-ministry", "#f-bureau", "#f-office"]
+    .some((s) => $(s).value);
 }
 
 function renderList() {
@@ -139,7 +234,7 @@ function renderList() {
   state.page = Math.min(state.page, pages);
   const start = (state.page - 1) * PAGE;
   const slice = state.filtered.slice(start, start + PAGE);
-  $("#result-info").textContent = `共 ${total} 篇` + (q || $("#f-year").value || $("#f-cat").value || $("#f-org").value ? "（已筛选）" : "");
+  $("#result-info").textContent = `共 ${total} 篇` + (hasActiveBrowseFilter(q) ? "（已筛选）" : "");
   $("#list").innerHTML = slice.map((p) => itemHTML(p, q)).join("") ||
     `<li class="item muted">没有匹配的政策，换个关键词试试。</li>`;
   renderPager(pages);
