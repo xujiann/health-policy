@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>卫生健康政策库 · 检索与趋势分析</title>
-<link rel="stylesheet" href="style.css?v=6">
+<title>卫生健康政策智能分析 · 检索与趋势预测</title>
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 <header class="top">
   <div class="wrap">
-    <h1>卫生健康政策库</h1>
-    <p class="sub">汇集 2009 年新医改以来的国家卫生健康政策，支持全文检索、多维筛选与关键词趋势分析</p>
+    <h1>卫生健康政策智能分析</h1>
+    <p class="sub">汇集 2009 年新医改以来的国家卫生健康政策，支持检索、主题趋势分析与未来方向研判</p>
     <nav class="tabs">
       <button class="tab active" data-view="browse">政策检索</button>
       <button class="tab" data-view="trend">趋势分析</button>
-      <button class="tab" data-view="about">关于</button>
+      <a class="tab tab-link" href="about.html">关于</a>
     </nav>
   </div>
 </header>
@@ -62,6 +62,7 @@
       <div id="kw-chips" class="kw-chips"></div>
     </div>
     <div class="chart-box"><canvas id="chart"></canvas></div>
+    <div id="forecast-box" class="forecast-box"></div>
     <div class="theme-detail">
       <label>查看主题命中政策：
         <select id="theme-pick"></select>
@@ -69,33 +70,7 @@
       <span id="theme-count" class="muted"></span>
     </div>
     <ul id="theme-list" class="list"></ul>
-  </section>
-
-  <!-- ============ 关于 ============ -->
-  <section id="view-about" class="view hidden">
-    <div class="about">
-      <h2>关于本站</h2>
-      <p id="about-stats" class="muted"></p>
-      <h3>数据来源</h3>
-      <p>数据来自<strong>中国政府网政策文件库</strong>（sousuo.www.gov.cn）统一检索接口，覆盖四类：</p>
-      <ul>
-        <li><strong>国务院公文</strong>——国发、国办发等，历史可回溯至 1990 年代</li>
-        <li><strong>部门文件</strong>——国家卫生健康委、国家医保局、国家药监局等部委文件</li>
-        <li><strong>其他文件</strong>与<strong>国务院公报</strong></li>
-      </ul>
-      <h3>采集方式</h3>
-      <p>按卫生健康领域的种子关键词（医改、公共卫生、疾控、分级诊疗、药品集采、医保、中医药……）
-         做<strong>标题检索</strong>，再经相关性过滤剔除宽松匹配的误中项（如「兽医管理体制改革」），
-         按文档去重后增量入库。原文链接均指向政府网官方页面。</p>
-      <h3>AI 主题打标与趋势口径</h3>
-      <p>预置主题曲线基于 <strong>AI 主题打标</strong>：由模型（Claude）逐篇阅读标题与摘要，
-         从 20 个受控主题里判定每条政策“真正属于哪些主题”（多标签），趋势按标签逐年计数。
-         相比字面词匹配，能排除“顺带提及”、归并同义说法、识别综合性文件涉及的多个子领域。
-         检索页也可按 AI 主题筛选。结果仅供研究参考，个别判定可能存在偏差。</p>
-      <h3>免责声明</h3>
-      <p>本站为政策研究辅助工具，内容以政府网官方原文为准。</p>
-    </div>
-  </section>
+  </section>
 </main>
 
 <footer class="foot wrap">
@@ -103,6 +78,6 @@
 </footer>
 
 <script src="vendor/chart.umd.min.js"></script>
-<script src="app.js?v=6"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>

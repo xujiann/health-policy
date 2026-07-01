@@ -40,16 +40,20 @@ async function boot() {
 
 /* ---------- Tabs ---------- */
 function initTabs() {
-  document.querySelectorAll(".tab").forEach((b) => {
+  document.querySelectorAll(".tab[data-view]").forEach((b) => {
     b.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
-      b.classList.add("active");
-      const v = b.dataset.view;
-      ["browse", "trend", "about"].forEach((name) =>
-        $("#view-" + name).classList.toggle("hidden", name !== v));
-      if (v === "trend" && !state.chart) drawChart();
+      showView(b.dataset.view);
     });
   });
+  if (location.hash === "#trend") showView("trend");
+}
+
+function showView(v) {
+  document.querySelectorAll(".tab[data-view]").forEach((x) =>
+    x.classList.toggle("active", x.dataset.view === v));
+  ["browse", "trend"].forEach((name) =>
+    $("#view-" + name).classList.toggle("hidden", name !== v));
+  if (v === "trend" && !state.chart) drawChart();
 }
 
 /* ---------- Filters ---------- */
@@ -165,6 +169,44 @@ const PALETTE = ["#0b6e5f", "#1d6fb8", "#c2410c", "#7c3aed", "#be123c", "#0891b2
 
 const CUSTOM_PALETTE = ["#111827", "#b91c1c", "#1e40af", "#6d28d9", "#a16207",
   "#0f766e", "#9d174d", "#3f6212"];
+const FORECAST_RULES = [
+  {
+    keys: ["分级诊疗", "基层", "医共体", "县域", "家庭医生"],
+    title: "基层整合与连续服务",
+    items: [
+      ["运行评价", "政策重点会从建设框架转向监测指标、绩效评价和连续服务质量。"],
+      ["资源下沉", "基层能力、县域协同、检查检验共享和人员流动仍是观察主线。"],
+      ["医保协同", "支付方式、总额预算和基金监管会更深嵌入基层治理。"]
+    ]
+  },
+  {
+    keys: ["医保", "医疗保障", "目录", "支付", "DRG", "DIP", "集采"],
+    title: "医保支付与基金治理",
+    items: [
+      ["动态调整", "目录、价格和支付政策将继续向精细化、动态化和证据化演进。"],
+      ["多元支付", "DRG/DIP、长期护理保险和商保衔接会影响服务供给结构。"],
+      ["智能监管", "基金监管会更依赖数据筛查、信用管理和闭环整改。"]
+    ]
+  },
+  {
+    keys: ["疾控", "公共卫生", "传染病", "疫情", "应急"],
+    title: "公共卫生与监测预警",
+    items: [
+      ["监测预警", "政策会继续强化多点触发、风险评估和跨部门信息共享。"],
+      ["医防协同", "疾控体系与医疗机构之间的分工、转介和数据闭环会更清晰。"],
+      ["平急结合", "应急处置、物资储备、队伍建设和常态防控会继续并行。"]
+    ]
+  },
+  {
+    keys: ["老龄", "医养", "护理", "康复", "安宁疗护", "长期护理"],
+    title: "老龄健康与护理服务",
+    items: [
+      ["服务扩容", "护理、康复、安宁疗护和居家服务会向社区与家庭延伸。"],
+      ["支付衔接", "长期护理保险、医疗服务价格和养老服务支付会继续联动。"],
+      ["人才建设", "专科护士、护理质量控制和基层照护队伍会成为持续主题。"]
+    ]
+  }
+];
 state.customLines = []; // {label, words, color}
 state.showPresets = true;
 state.relMode = "all"; // 'all' = 标题+摘要；'strong' = 仅标题强相关
@@ -328,6 +370,7 @@ function refreshChart() {
   state.chart.data.datasets = buildDatasets();
   state.chart.options.plugins.title.text = chartTitle();
   state.chart.update();
+  renderForecast();
 }
 
 function renderThemeList(theme) {
@@ -338,15 +381,57 @@ function renderThemeList(theme) {
     `「${theme}」共 ${hits.length} 篇（AI 主题标签）。${desc}`;
   $("#theme-list").innerHTML = hits.slice(0, 50).map((p) => itemHTML(p, "")).join("") ||
     `<li class="item muted">该主题暂无打标政策（可能还在打标中）。</li>`;
+  renderForecast(theme, hits, desc);
+}
+
+function renderForecast(theme = $("#theme-pick")?.value, hits = null, desc = "") {
+  const box = $("#forecast-box");
+  if (!box || !theme) return;
+  const matched = hits || state.policies.filter((p) => (p.th || []).includes(theme));
+  const byYear = {};
+  matched.forEach((p) => { byYear[p.y] = (byYear[p.y] || 0) + 1; });
+  const activeYears = Object.keys(byYear).map(Number).sort((a, b) => a - b);
+  const latest = activeYears[activeYears.length - 1] || "-";
+  const recentFloor = Math.max(...state.trends.years) - 2;
+  const recent = matched.filter((p) => p.y >= recentFloor).length;
+  const rule = FORECAST_RULES.find((item) =>
+    item.keys.some((key) => theme.includes(key) || desc.includes(key)));
+  const cards = rule ? rule.items : [
+    ["政策延续", recent ? "近三年仍有政策命中，说明该主题仍处在持续推进或制度完善阶段。" : "近三年命中较少，后续可重点观察是否出现新的专项文件或评价指标。"],
+    ["协同重点", "建议结合发布机关、主题标签和年度峰值，识别跨部门协同和治理工具变化。"],
+    ["研究提示", "后续可补充政策目标、工具、约束条件和实施评价，形成专题演进报告。"]
+  ];
+  const evidence = matched.length >= 100 ? "高" : matched.length >= 30 ? "中" : matched.length > 0 ? "低" : "-";
+  box.innerHTML = `
+    <div class="forecast-head">
+      <div>
+        <span>未来方向研判</span>
+        <h3>${esc(theme)}：${esc(rule?.title || "后续观察重点")}</h3>
+      </div>
+      <dl>
+        <div><dt>证据强度</dt><dd>${evidence}</dd></div>
+        <div><dt>近三年命中</dt><dd>${recent}篇</dd></div>
+        <div><dt>最近年份</dt><dd>${latest}</dd></div>
+      </dl>
+    </div>
+    <div class="forecast-cards">
+      ${cards.map(([title, text]) => `<article><strong>${esc(title)}</strong><p>${esc(text)}</p></article>`).join("")}
+    </div>`;
 }
 
 /* ---------- About ---------- */
 function initAbout() {
   const m = state.meta;
-  $("#about-stats").textContent =
+  const aboutStats = $("#about-stats");
+  const footMeta = $("#foot-meta");
+  if (aboutStats) {
+      aboutStats.textContent =
     `收录政策 ${m.total} 篇，年份覆盖 ${m.year_range[0]}–${m.year_range[1]}，数据构建于 ${m.built_at}。`;
-  $("#foot-meta").textContent =
+  }
+  if (footMeta) {
+      footMeta.textContent =
     `卫生健康政策库 · 共 ${m.total} 篇 · 更新于 ${m.built_at} · 数据来源：中国政府网政策文件库`;
+  }
 }
 
 boot();

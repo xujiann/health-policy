@@ -18,6 +18,7 @@ a:hover{text-decoration:underline}
   cursor:pointer;border-radius:8px 8px 0 0}
 .tab:hover{color:#fff}
 .tab.active{background:var(--bg);color:var(--brand-d);font-weight:600}
+.tab-link{display:inline-block;text-decoration:none}
 
 main{min-height:60vh;padding-top:18px}
 .loading{padding:40px;text-align:center;color:var(--muted)}
@@ -80,6 +81,28 @@ main{min-height:60vh;padding-top:18px}
 .theme-detail select{padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
 .muted{color:var(--muted);font-size:13px}
 
+.forecast-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}
+.forecast-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:12px}
+.forecast-head span{display:block;color:var(--brand);font-size:12px;font-weight:700}
+.forecast-head h3{margin:2px 0 0;font-size:18px;color:var(--brand-d)}
+.forecast-head dl{display:flex;gap:8px;margin:0}
+.forecast-head dl div{min-width:82px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center}
+.forecast-head dt{font-size:12px;color:var(--muted)}
+.forecast-head dd{margin:2px 0 0;font-weight:700}
+.forecast-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.forecast-cards article{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px}
+.forecast-cards strong{display:block;color:var(--ink);margin-bottom:6px}
+.forecast-cards p{margin:0;color:#4b5563;font-size:13px}
+
+.about-page{padding:18px 24px 24px}
+.about-hero{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:16px}
+.about-kicker{display:inline-flex;background:var(--chip);color:var(--brand-d);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700}
+.about-hero h2{margin:10px 0 6px;font-size:28px;color:var(--brand-d)}
+.about-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.about-grid article{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px}
+.about-grid h3{margin:0 0 8px;color:var(--brand-d);font-size:16px}
+.about-name{font-size:22px;font-weight:700;color:var(--brand-d)}
+
 .about{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 24px 24px}
 .about h2{color:var(--brand-d)}
 .about h3{margin-top:22px;color:var(--brand-d);font-size:16px}
@@ -117,6 +140,12 @@ main{min-height:60vh;padding-top:18px}
   .theme-detail select{width:100%}
 
   /* 触摸目标更大 */
+  .forecast-head{display:grid}
+  .forecast-head dl,.forecast-cards,.about-grid{display:grid;grid-template-columns:1fr}
+  .forecast-head dl div{min-width:0}
+  .about-page{padding:14px 14px 20px}
+  .about-hero h2{font-size:22px}
+
   .pager button{padding:9px 14px;font-size:14px}
 
   .about{padding:6px 16px 20px}
