@@ -24,7 +24,13 @@ main{min-height:60vh;padding-top:18px}
 .loading{padding:40px;text-align:center;color:var(--muted)}
 .hidden{display:none}
 
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.summary-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.summary-panel article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.summary-panel span{display:block;color:var(--muted);font-size:12px}
+.summary-panel strong{display:block;color:var(--brand-d);font-size:24px;line-height:1.2;margin-top:3px}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:rgba(255,255,255,.72);
+  border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
 .toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
   font-size:14px;background:var(--card)}
 .toolbar input#q{flex:1;min-width:240px}
@@ -126,6 +132,9 @@ main{min-height:60vh;padding-top:18px}
 
   /* 筛选：搜索框整行，下拉两列自适应，排序单独整行 */
   .toolbar{gap:8px}
+  .summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .summary-panel article{padding:10px 11px}
+  .summary-panel strong{font-size:20px}
   .toolbar input#q{flex:1 1 100%;min-width:0}
   .toolbar select{flex:1 1 calc(50% - 4px);min-width:0;font-size:13px;padding:9px 8px}
   .toolbar #f-sort{flex-basis:100%}

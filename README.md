@@ -107,6 +107,7 @@ python tag_policies.py --retag    # 改了 TAG_THEMES 后全量重打
 |------|------|--------|
 | `HealthPolicyDaily` | 每天 08:40 | `run_update.ps1 -Push`：采集新政策 → 建站 → 推送 |
 | `HealthPolicyTagging` | 每 5.5 小时 | `tag_loop.ps1`：给未打标政策打标 → 建站 → 推送 |
+| `Daily policy data update` | 每天 06:20（北京时间） | GitHub Actions 运行 `update_static_data.py`，发现新政策即更新 `site/data` 并触发 Pages 发布 |
 
 两者配合：Daily 采集、Tagging 给新政策打标，数据变化后自动推送，GitHub Actions
 重新部署，线上约 1 分钟刷新。存量首次打标受订阅限额需分多个窗口（约 1–2 天）完成，

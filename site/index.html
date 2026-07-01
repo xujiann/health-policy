@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
 <header class="top">
@@ -22,6 +22,24 @@
 <main class="wrap">
   <!-- 加载状态 -->
   <div id="loading" class="loading">正在加载政策数据…</div>
+  <section id="summary-panel" class="summary-panel hidden">
+    <article>
+      <span>政策文件</span>
+      <strong id="stat-policy-total">-</strong>
+    </article>
+    <article>
+      <span>关联解读</span>
+      <strong id="stat-interpretation-total">-</strong>
+    </article>
+    <article>
+      <span>最新年份</span>
+      <strong id="stat-latest-year">-</strong>
+    </article>
+    <article>
+      <span>当前命中</span>
+      <strong id="stat-filtered-total">-</strong>
+    </article>
+  </section>
 
   <!-- ============ 政策检索 ============ -->
   <section id="view-browse" class="view">
@@ -82,6 +100,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=3"></script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>

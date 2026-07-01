@@ -35,6 +35,7 @@ async function boot() {
     state.meta = buildRuntimeMeta(state.policies, meta);
     state.trends = buildRuntimeTrends(state.policies, tr);
     $("#loading").classList.add("hidden");
+    initSummaryPanel();
     initFilters();
     initTabs();
     initBrowse();
@@ -335,7 +336,22 @@ function applyFilters() {
   arr.sort((a, b) => sort === "date_asc" ? a.d.localeCompare(b.d) : b.d.localeCompare(a.d));
   state.filtered = arr;
   state.page = 1;
+  updateFilteredStat(arr.length);
   renderList();
+}
+
+function initSummaryPanel() {
+  const m = state.meta;
+  $("#summary-panel").classList.remove("hidden");
+  $("#stat-policy-total").textContent = m.policy_total || m.total;
+  $("#stat-interpretation-total").textContent = m.interpretation_total || 0;
+  $("#stat-latest-year").textContent = m.year_range?.[1] || "-";
+  updateFilteredStat(m.policy_total || m.total);
+}
+
+function updateFilteredStat(n) {
+  const el = $("#stat-filtered-total");
+  if (el) el.textContent = n;
 }
 
 function taxonomyText(p) {
