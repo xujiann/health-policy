@@ -211,7 +211,7 @@ function itemHTML(p, q) {
   ].filter(Boolean).join("");
   const themes = (p.th || []).map((t) => `<span class="th-chip">${esc(t)}</span>`).join("");
   const taxonomy = p.tx
-    ? `<div class="tax-row"><span>${esc(p.tx.ministryName)}</span><span>${esc(p.tx.bureauName)}</span><span>${esc(p.tx.office)}</span><em>${esc(p.tx.assignment)}</em></div>`
+    ? `<div class="tax-row"><span>${esc(p.tx.ministryName)}</span><span>${esc(p.tx.bureauName)}</span><span>${esc(p.tx.office)}</span><em>${esc(p.tx.assignment)}</em>${p.tx.docPrefix ? `<em>文号：${esc(p.tx.docPrefix)}</em>` : ""}</div>`
     : "";
   return `<li class="item">
     <h3><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(p.t, q)}</a></h3>

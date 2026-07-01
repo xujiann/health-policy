@@ -74,6 +74,96 @@
     other: ["other_collab", "综合协同"]
   };
 
+  const docPrefixRules = [
+    ["国办发", "state", "state_health_reform", "规划部署"],
+    ["国办函", "state", "state_health_reform", "综合政策"],
+    ["国发", "state", "state_health_reform", "规划部署"],
+    ["国卫办医急", "nhc", "nhc_emergency", "医疗应急管理处"],
+    ["国卫医急", "nhc", "nhc_emergency", "医疗应急管理处"],
+    ["国卫办医政", "nhc", "nhc_medical", "综合处"],
+    ["国卫办医", "nhc", "nhc_medical", "综合处"],
+    ["国卫医", "nhc", "nhc_medical", "综合处"],
+    ["国卫办基层", "nhc", "nhc_primary", "综合处"],
+    ["国卫基层", "nhc", "nhc_primary", "综合处"],
+    ["国卫办规划", "nhc", "nhc_planning", "综合处"],
+    ["国卫规划", "nhc", "nhc_planning", "发展规划处"],
+    ["国卫办财务", "nhc", "nhc_finance", "办公室"],
+    ["国卫财务", "nhc", "nhc_finance", "预算管理处"],
+    ["国卫办法规", "nhc", "nhc_legal", "综合处"],
+    ["国卫法规", "nhc", "nhc_legal", "立法处"],
+    ["国卫体改", "nhc", "nhc_reform", "综合协调处"],
+    ["国卫办应急", "nhc", "nhc_emergency", "综合处"],
+    ["国卫应急", "nhc", "nhc_emergency", "医疗应急管理处"],
+    ["国卫办疾控", "nhc", "nhc_emergency", "公共卫生医疗管理处"],
+    ["国卫疾控", "nhc", "nhc_emergency", "公共卫生医疗管理处"],
+    ["国卫办监督", "nhc", "nhc_emergency", "医疗监督和行风管理处"],
+    ["国卫监督", "nhc", "nhc_emergency", "医疗监督和行风管理处"],
+    ["国卫办科教", "nhc", "nhc_science", "综合处"],
+    ["国卫科教", "nhc", "nhc_science", "项目管理处"],
+    ["国卫办药政", "nhc", "nhc_drug", "综合处"],
+    ["国卫药政", "nhc", "nhc_drug", "药物政策处"],
+    ["国卫办食品", "nhc", "nhc_food", "综合处"],
+    ["国卫食品", "nhc", "nhc_food", "食品安全标准管理处"],
+    ["国卫老龄", "nhc", "nhc_ageing", "健康服务处"],
+    ["国卫办老龄", "nhc", "nhc_ageing", "综合处"],
+    ["国卫妇幼", "nhc", "nhc_maternal", "妇女卫生处"],
+    ["国卫办妇幼", "nhc", "nhc_maternal", "综合处"],
+    ["国卫职健", "nhc", "nhc_occupational", "职业病管理处"],
+    ["国卫办职健", "nhc", "nhc_occupational", "综合处"],
+    ["国卫人口", "nhc", "nhc_population", "政策协调处"],
+    ["国卫宣传", "nhc", "nhc_publicity", "宣传处"],
+    ["国卫国际", "nhc", "nhc_international", "综合处"],
+    ["国中医药医政", "tcm", "tcm_admin", "中医医院管理处"],
+    ["国中医药人教", "tcm", "tcm_admin", "传承创新处"],
+    ["国中医药科技", "tcm", "tcm_admin", "传承创新处"],
+    ["国中医药综合", "tcm", "tcm_admin", "中医药服务处"],
+    ["国疾控传防", "cdc", "cdc_monitoring", "传染病监测处"],
+    ["国疾控应急", "cdc", "cdc_emergency", "应急处置处"],
+    ["国疾控卫免", "cdc", "cdc_immunization", "免疫规划处"],
+    ["国疾控综卫免", "cdc", "cdc_immunization", "免疫规划处"],
+    ["国疾控综", "cdc", "cdc_monitoring", "风险评估处"],
+    ["医保发", "nhsa", "nhsa_planning", "规划统计处"],
+    ["医保办发", "nhsa", "nhsa_planning", "规划统计处"],
+    ["医保办函", "nhsa", "nhsa_planning", "法规标准处"],
+    ["医保函", "nhsa", "nhsa_planning", "法规标准处"],
+    ["药监综", "nmpa", "nmpa_drug", "综合监管"],
+    ["国药监", "nmpa", "nmpa_drug", "药品监管"],
+    ["食药监", "nmpa", "nmpa_drug", "药品监管"],
+    ["发改社会", "ndrc", "ndrc_social", "卫生健康发展"],
+    ["财社", "mof", "mof_social", "卫生健康资金"],
+    ["人社部发", "mohrss", "mohrss_social", "专业技术人员管理"],
+    ["民发", "mca", "mca_ageing", "养老服务"],
+    ["教体艺", "moe", "moe_sports_health", "学校卫生"]
+  ];
+  const broadDocPrefixes = new Set(["医保发", "医保办发", "医保函", "医保办函"]);
+
+  const docOfficeRefiners = [
+    ["nhc_medical", "医疗资源处", /区域医疗中心|国家医学中心|医疗资源|床位|资源扩容/],
+    ["nhc_medical", "护理与康复处", /护理|康复|安宁疗护/],
+    ["nhc_medical", "心理健康与精神卫生处", /精神卫生|心理健康|精神障碍/],
+    ["nhc_medical", "医疗管理处", /医疗质量|医疗安全|质控|诊疗规范|检查检验结果互认|合理医疗检查/],
+    ["nhc_primary", "运行评价处", /医共体|医疗卫生共同体|县域|运行评价|乡村医生|村卫生室/],
+    ["nhc_primary", "家庭医生处", /家庭医生|签约服务/],
+    ["nhc_primary", "基本公共卫生处", /基本公共卫生|慢病|健康档案/],
+    ["nhc_planning", "信息统计处", /信息化|互联网|数据|平台|统计|远程医疗/],
+    ["nhc_planning", "爱国卫生工作办公室", /爱国卫生|健康城市|健康乡村|控烟/],
+    ["nhc_ageing", "医养结合处", /医养结合|养老|失能/],
+    ["nhc_maternal", "儿童卫生处", /儿童|婴幼儿|托育/],
+    ["nhc_maternal", "出生缺陷防治处", /出生缺陷|产前筛查|辅助生殖/],
+    ["nhsa_services", "医保目录处", /医保目录|药品目录|谈判药品|限定支付/],
+    ["nhsa_services", "支付方式改革处", /DRG|DIP|支付方式|付费|总额预算/],
+    ["nhsa_price", "药品耗材招采处", /集采|集中带量采购|招标采购|耗材/],
+    ["nhsa_price", "医疗服务价格处", /医疗服务价格|价格项目|收费标准/],
+    ["nhsa_fund", "基金监管处", /基金监管|欺诈骗保|监督检查/],
+    ["nhsa_fund", "飞行检查处", /飞行检查/],
+    ["nhsa_benefits", "长期护理保险处", /长期护理|长护险/],
+    ["nhsa_benefits", "生育保障处", /生育保险|生育保障|生育津贴/],
+    ["cdc_monitoring", "预警处", /预警/],
+    ["cdc_immunization", "免疫规划处", /免疫规划|疫苗|接种/],
+    ["tcm_admin", "中药管理处", /中药|中药饮片|中成药/],
+    ["nmpa_drug", "医疗器械监管", /医疗器械|体外诊断|器械/]
+  ];
+
   const rules = [
     ["tcm", "tcm_admin", "中医医院管理处", /中医医院|中西医协同|中医医疗机构|中医医院评审/],
     ["tcm", "tcm_admin", "中药管理处", /中药|中药饮片|中成药/],
@@ -172,6 +262,37 @@
     ].filter(Boolean).join(" ");
   }
 
+  function extractDocNo(policy) {
+    const text = [policy.pc, policy.t, policy.s].filter(Boolean).join(" ");
+    const match = text.match(/[\u4e00-\u9fa5A-Za-z]{1,16}〔\d{4}〕\d+号/);
+    return match ? match[0] : "";
+  }
+
+  function docPrefixOf(docNo) {
+    return docNo ? docNo.split("〔")[0] : "";
+  }
+
+  function classifyByDocNo(policy, text) {
+    const docNo = extractDocNo(policy);
+    const prefix = docPrefixOf(docNo);
+    if (!prefix) return null;
+    const rule = docPrefixRules.find(([rulePrefix]) => prefix.startsWith(rulePrefix));
+    if (!rule) return null;
+    const [rulePrefix, ministryId, bureauId, defaultOffice] = rule;
+    const refined = docOfficeRefiners.find(([candidateBureau, , pattern]) => {
+      const candidate = byBureau.get(candidateBureau);
+      return pattern.test(text) &&
+        (candidateBureau === bureauId || (broadDocPrefixes.has(rulePrefix) && candidate?.ministry === ministryId));
+    });
+    return {
+      ministryId,
+      bureauId: refined ? refined[0] : bureauId,
+      office: refined ? refined[1] : defaultOffice,
+      docNo,
+      docPrefix: prefix
+    };
+  }
+
   function detectMinistries(text) {
     const found = ministries
       .filter((ministry) => ministry.aliases.some((alias) => text.includes(alias)))
@@ -182,12 +303,15 @@
   function classify(policy) {
     const text = textOf(policy);
     const matchedMinistries = detectMinistries(text);
-    const rule = rules.find((item) => item[3].test(text));
-    const primary = rule?.[0] || matchedMinistries[0] || "other";
+    const docRule = classifyByDocNo(policy, text);
+    const rule = docRule ? null : rules.find((item) => item[3].test(text));
+    const primary = docRule?.ministryId || rule?.[0] || matchedMinistries[0] || "other";
     const ministriesForPolicy = matchedMinistries.includes(primary)
       ? matchedMinistries
       : [primary, ...matchedMinistries];
-    const [bureauId, office] = rule
+    const [bureauId, office] = docRule
+      ? [docRule.bureauId, docRule.office]
+      : rule
       ? [rule[1], rule[2]]
       : (fallback[primary] || fallback.other);
     const ministry = byMinistry.get(primary) || byMinistry.get("other");
@@ -199,7 +323,9 @@
       bureauId,
       bureauName: bureau.name,
       office,
-      assignment: rule ? "规则归口" : "机关归口"
+      assignment: docRule ? "文号归口" : rule ? "规则归口" : "机关归口",
+      docNo: docRule?.docNo || extractDocNo(policy),
+      docPrefix: docRule?.docPrefix || docPrefixOf(extractDocNo(policy))
     };
   }
 
