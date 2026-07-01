@@ -3,7 +3,7 @@
 
 const PAGE = 20;
 const state = {
-  policies: [], trends: null, meta: null,
+  policies: [], interpretations: [], excluded: [], trends: null, meta: null,
   filtered: [], page: 1, chart: null,
 };
 
@@ -24,12 +24,16 @@ async function boot() {
       loadJSON("data/trends.json"),
       loadJSON("data/meta.json"),
     ]);
-    state.policies = pol.map((p) => ({
+    const prepared = preparePolicyCorpus(pol);
+    state.interpretations = prepared.interpretations;
+    state.excluded = prepared.excluded;
+    state.policies = prepared.policies.map((p) => ({
       ...p,
       tx: window.POLICY_TAXONOMY?.classify(p) || null
     }));
-    state.trends = tr;
-    state.meta = meta;
+    attachInterpretations(state.policies, state.interpretations);
+    state.meta = buildRuntimeMeta(state.policies, meta);
+    state.trends = buildRuntimeTrends(state.policies, tr);
     $("#loading").classList.add("hidden");
     initFilters();
     initTabs();
@@ -41,6 +45,152 @@ async function boot() {
     $("#loading").textContent = "数据加载失败：" + e.message +
       "（请确认已运行 build_site.py 生成 data/ 下的 JSON，并通过本地服务访问）";
   }
+}
+
+/* ---------- Corpus policy-only cleanup ---------- */
+const INTERPRETATION_RE = /(政策解读|《.+》解读|解读《|答记者问|吹风会|新闻发布会|图解|一图读懂|划重点|专家解读|负责人就|有关情况|最新回应|问答|访谈|透视)/;
+const NON_POLICY_RE = /(客户端下载页|政府信息公开指南|政府信息公开制度|机构职能|内设机构|主要职责|政务公开|首页|列表页|新闻发布会$|吹风会$|每日问答|两会精神看落实|新华社记者|记者问|最新回应|划重点|一图读懂|图解)/;
+const POLICY_SIGNAL_RE = /(通知|意见|办法|规划|方案|标准|指南|目录|细则|决定|批复|公告|令|公报|工作要点|行动计划|实施方案|暂行规定|管理规范|监测指标体系|评判标准|设置标准|国办发|国发|国卫|医保|国中医药|国疾控|药监|财社|人社部发|民发|教体艺|〔\d{4}〕\d+号)/;
+
+function docNoFromText(text) {
+  const match = (text || "").match(/(?:国办发|国办函|国发|国卫[\u4e00-\u9fa5A-Za-z]{0,8}|医保[\u4e00-\u9fa5A-Za-z]{0,6}|国中医药[\u4e00-\u9fa5A-Za-z]{0,8}|国疾控[\u4e00-\u9fa5A-Za-z]{0,8}|国药监[\u4e00-\u9fa5A-Za-z]{0,8}|药监[\u4e00-\u9fa5A-Za-z]{0,8}|财社|人社部发|民发|教体艺[\u4e00-\u9fa5A-Za-z]{0,6})〔\d{4}〕\d+号/);
+  return match ? match[0] : "";
+}
+
+function normalizePolicyTitle(text) {
+  return (text || "")
+    .replace(/《|》|〈|〉|“|”|‘|’|「|」|（.*?）|\(.*?\)/g, "")
+    .replace(/[^\u4e00-\u9fa5A-Za-z0-9]/g, "")
+    .replace(/政策解读|解读|答记者问|有关情况|通知|意见|方案|办法/g, "")
+    .slice(0, 80);
+}
+
+function quotedTitles(text) {
+  return [...(text || "").matchAll(/《([^》]{4,80})》/g)]
+    .map((m) => m[1])
+    .filter(Boolean);
+}
+
+function referenceTitles(item) {
+  return quotedTitles(item.t).length ? quotedTitles(item.t) : quotedTitles(`${item.t || ""} ${item.s || ""}`);
+}
+
+function titleMatchScore(policyTitle, refTitle) {
+  const a = normalizePolicyTitle(policyTitle);
+  const b = normalizePolicyTitle(refTitle);
+  if (a.length < 10 || b.length < 10) return 0;
+  if (a.includes(b)) return b.length / a.length;
+  if (b.includes(a)) return a.length / b.length;
+  return 0;
+}
+
+function hasQuotedTitleMatch(policy, item, minScore = 0.55) {
+  const refs = referenceTitles(item);
+  if (!refs.length) return true;
+  return refs.some((ref) => titleMatchScore(policy.t, ref) >= minScore);
+}
+
+function isInterpretationItem(p) {
+  const text = `${p.t || ""} ${p.s || ""}`;
+  return INTERPRETATION_RE.test(text);
+}
+
+function isPolicyDocument(p) {
+  const text = `${p.t || ""} ${p.pc || ""} ${p.s || ""}`;
+  if (isInterpretationItem(p)) return false;
+  if (p.c === "otherfile") return false;
+  if (NON_POLICY_RE.test(text) && !docNoFromText(text)) return false;
+  return POLICY_SIGNAL_RE.test(text);
+}
+
+function preparePolicyCorpus(items) {
+  const policies = [];
+  const interpretations = [];
+  const excluded = [];
+  items.forEach((p) => {
+    if (isPolicyDocument(p)) {
+      policies.push(p);
+    } else if (isInterpretationItem(p)) {
+      interpretations.push(p);
+    } else {
+      excluded.push(p);
+    }
+  });
+  return { policies, interpretations, excluded };
+}
+
+function attachInterpretations(policies, interpretations) {
+  const byDocNo = new Map();
+  const byNormTitle = new Map();
+  policies.forEach((p) => {
+    const docNo = docNoFromText(`${p.pc || ""} ${p.t || ""} ${p.s || ""}`);
+    if (docNo) byDocNo.set(docNo, p);
+    const norm = normalizePolicyTitle(p.t);
+    if (norm) byNormTitle.set(norm, p);
+    p.interps = [];
+  });
+  interpretations.forEach((item) => {
+    const text = `${item.t || ""} ${item.s || ""}`;
+    const docNo = docNoFromText(text);
+    let target = docNo ? byDocNo.get(docNo) : null;
+    if (target && !hasQuotedTitleMatch(target, item, 0.45)) target = null;
+    if (!target) {
+      let best = { policy: null, score: 0 };
+      referenceTitles(item).forEach((ref) => {
+        policies.forEach((p) => {
+          const score = titleMatchScore(p.t, ref);
+          if (score > best.score) best = { policy: p, score };
+        });
+      });
+      target = best.score >= 0.55 ? best.policy : null;
+    }
+    if (target && !target.interps.some((x) => x.u === item.u)) {
+      target.interps.push(item);
+    }
+  });
+  policies.forEach((p) => p.interps.sort((a, b) => b.d.localeCompare(a.d)));
+}
+
+function buildRuntimeMeta(policies, sourceMeta) {
+  const yearCount = {}, catCount = {}, orgCount = {}, themeCount = {};
+  policies.forEach((p) => {
+    yearCount[p.y] = (yearCount[p.y] || 0) + 1;
+    catCount[p.c] = (catCount[p.c] || 0) + 1;
+    orgCount[p.ogk] = (orgCount[p.ogk] || 0) + 1;
+    (p.th || []).forEach((th) => { themeCount[th] = (themeCount[th] || 0) + 1; });
+  });
+  const years = Object.keys(yearCount).map(Number).sort((a, b) => a - b);
+  return {
+    ...sourceMeta,
+    total: policies.length,
+    policy_total: policies.length,
+    interpretation_total: policies.reduce((sum, p) => sum + (p.interps?.length || 0), 0),
+    excluded_total: state.excluded.length,
+    year_range: years.length ? [years[0], years[years.length - 1]] : [],
+    cat_count: catCount,
+    year_count: Object.fromEntries(Object.entries(yearCount).sort((a, b) => Number(a[0]) - Number(b[0]))),
+    top_orgs: Object.entries(orgCount).sort((a, b) => b[1] - a[1]).slice(0, 40),
+    theme_facet: Object.entries(themeCount).sort((a, b) => b[1] - a[1]),
+  };
+}
+
+function buildRuntimeTrends(policies, sourceTrends) {
+  const years = Object.keys(state.meta.year_count).map(Number);
+  const themes = {};
+  Object.keys(sourceTrends.themes).forEach((name) => {
+    const byYear = Object.fromEntries(years.map((y) => [y, 0]));
+    policies.forEach((p) => {
+      if ((p.th || []).includes(name)) byYear[p.y] = (byYear[p.y] || 0) + 1;
+    });
+    const series = years.map((y) => byYear[y] || 0);
+    themes[name] = {
+      desc: sourceTrends.themes[name].desc,
+      series,
+      total: series.reduce((sum, n) => sum + n, 0),
+    };
+  });
+  const ordered = Object.entries(themes).sort((a, b) => b[1].total - a[1].total);
+  return { years, themes: Object.fromEntries(ordered) };
 }
 
 /* ---------- Tabs ---------- */
@@ -213,12 +363,16 @@ function itemHTML(p, q) {
   const taxonomy = p.tx
     ? `<div class="tax-row"><span>${esc(p.tx.ministryName)}</span><span>${esc(p.tx.bureauName)}</span><span>${esc(p.tx.office)}</span><em>${esc(p.tx.assignment)}</em>${p.tx.docPrefix ? `<em>文号：${esc(p.tx.docPrefix)}</em>` : ""}</div>`
     : "";
+  const interps = (p.interps || []).slice(0, 4).map((item) =>
+    `<a href="${esc(item.u)}" target="_blank" rel="noopener"><strong>${esc(item.t)}</strong><span>${esc(item.d || "")}</span></a>`
+  ).join("");
   return `<li class="item">
     <h3><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(p.t, q)}</a></h3>
     <div class="meta">${meta}</div>
     ${taxonomy}
     ${themes ? `<div class="th-row">${themes}</div>` : ""}
     ${p.s ? `<p class="summary">${highlight(p.s, q)}…</p>` : ""}
+    ${interps ? `<div class="interp-row"><span>政策解读</span>${interps}</div>` : ""}
   </li>`;
 }
 
@@ -524,8 +678,8 @@ function initAbout() {
     `收录政策 ${m.total} 篇，年份覆盖 ${m.year_range[0]}–${m.year_range[1]}，数据构建于 ${m.built_at}。`;
   }
   if (footMeta) {
-      footMeta.textContent =
-    `卫生健康政策库 · 共 ${m.total} 篇 · 更新于 ${m.built_at} · 数据来源：中国政府网政策文件库`;
+    footMeta.textContent =
+      `卫生健康政策库 · 政策文件 ${m.policy_total || m.total} 篇 · 关联解读 ${m.interpretation_total || 0} 篇 · 更新于 ${m.built_at} · 数据来源：中国政府网政策文件库`;
   }
 }
 

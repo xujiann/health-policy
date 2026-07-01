@@ -44,6 +44,11 @@ main{min-height:60vh;padding-top:18px}
 .tax-row{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 0;font-size:12px;align-items:center}
 .tax-row span{background:#ecfdf5;color:#065f46;border:1px solid #ccefe3;border-radius:20px;padding:1px 8px}
 .tax-row em{color:var(--muted);font-style:normal}
+.interp-row{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);display:grid;gap:6px}
+.interp-row>span{font-size:12px;font-weight:700;color:var(--brand-d)}
+.interp-row a{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;border:1px solid #dbeafe;background:#f8fbff;border-radius:8px;color:#1d4ed8;font-size:13px}
+.interp-row a strong{font-weight:500;color:#1e3a8a}
+.interp-row a span{color:var(--muted);white-space:nowrap}
 
 .pager{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:20px 0}
 .pager button{padding:6px 12px;border:1px solid var(--line);background:var(--card);
@@ -128,6 +133,8 @@ main{min-height:60vh;padding-top:18px}
   .item{padding:12px 13px}
   .item h3{font-size:15px}
   .item .summary{font-size:13px}
+  .interp-row a{display:grid;gap:2px}
+  .interp-row a span{white-space:normal}
 
   /* 图表：略高以容纳多主题图例，左右内边距收紧 */
   .chart-box{height:460px;padding:12px 6px}
