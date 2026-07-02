@@ -53,18 +53,10 @@ main{min-height:60vh;padding-top:18px}
 .loading{padding:40px;text-align:center;color:var(--muted)}
 .hidden{display:none}
 
-.summary-panel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.summary-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .summary-panel article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .summary-panel span{display:block;color:var(--muted);font-size:12px}
 .summary-panel strong{display:block;color:var(--brand-d);font-size:24px;line-height:1.2;margin-top:3px}
-.wechat-panel{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f0fdf4;
-  border:1px solid #bbf7d0;border-radius:10px;margin:-2px 0 14px;padding:10px 12px;color:#14532d}
-.wechat-panel strong{display:block;font-size:13px}
-.wechat-panel span{font-size:12px;color:#166534}
-.wechat-panel button{border:1px solid #86efac;background:#fff;color:#166534;border-radius:8px;padding:7px 10px;
-  white-space:nowrap;cursor:pointer}
-.wechat-panel button:active{transform:translateY(1px)}
-
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:rgba(255,255,255,.72);
   border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
 .toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
@@ -81,6 +73,12 @@ main{min-height:60vh;padding-top:18px}
 .item h3{margin:0 0 6px;font-size:16px;font-weight:600}
 .item h3 a{color:var(--ink)}
 .item h3 a:hover{color:var(--brand)}
+.policy-name-label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.policy-title{line-height:1.45}
+.policy-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 8px}
+.policy-fields div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.policy-fields dt{font-size:12px;color:var(--muted);margin-bottom:3px}
+.policy-fields dd{margin:0;color:#0f172a;font-size:13px;font-weight:700;word-break:break-word}
 .item .meta{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-bottom:6px}
 .item .chip{background:var(--chip);color:var(--brand-d);padding:1px 8px;border-radius:20px}
 .item .doc-no{font-weight:700;color:#0f172a;background:#f8fafc;border:1px solid var(--line);
@@ -98,6 +96,7 @@ main{min-height:60vh;padding-top:18px}
 .interp-row a{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;border:1px solid #dbeafe;background:#f8fbff;border-radius:8px;color:#1d4ed8;font-size:13px}
 .interp-row a strong{font-weight:500;color:#1e3a8a}
 .interp-row a span{color:var(--muted);white-space:nowrap}
+.interp-empty{font-style:normal;color:var(--muted);font-size:13px}
 
 .pager{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:20px 0}
 .pager button{padding:6px 12px;border:1px solid var(--line);background:var(--card);
@@ -227,6 +226,7 @@ main{min-height:60vh;padding-top:18px}
 .wechat-qr a{word-break:break-all;color:var(--brand-d);font-weight:700}
 
 .foot{padding:24px 16px 40px;color:var(--muted);font-size:12px;text-align:center}
+.foot span{display:block;line-height:1.8}
 
 @media(max-width:640px){
   .wrap{padding:0 12px}
@@ -256,15 +256,13 @@ main{min-height:60vh;padding-top:18px}
   .summary-panel strong{font-size:20px}
   .quality-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .quality-panel article{padding:8px 9px}
-  .wechat-panel{align-items:flex-start;margin-top:-4px}
-  .wechat-panel button{padding:8px 10px}
-  body.is-wechat .toolbar{position:static}
   .toolbar input#q{flex:1 1 100%;min-width:0}
   .toolbar select{flex:1 1 calc(50% - 4px);min-width:0;font-size:13px;padding:9px 8px}
   .toolbar #f-sort{flex-basis:100%}
 
   .item{padding:12px 13px}
   .item h3{font-size:15px}
+  .policy-fields{grid-template-columns:1fr;gap:6px}
   .item .summary{font-size:13px}
   .interp-row a{display:grid;gap:2px}
   .interp-row a span{white-space:normal}

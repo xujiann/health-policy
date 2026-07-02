@@ -35,7 +35,6 @@ async function boot() {
     state.meta = buildRuntimeMeta(state.policies, meta);
     state.trends = buildRuntimeTrends(state.policies, tr);
     $("#loading").classList.add("hidden");
-    initWeChatPanel();
     initSummaryPanel();
     initFilters();
     initTabs();
@@ -47,25 +46,6 @@ async function boot() {
     $("#loading").textContent = "数据加载失败：" + e.message +
       "（请确认已运行 build_site.py 生成 data/ 下的 JSON，并通过本地服务访问）";
   }
-}
-
-function initWeChatPanel() {
-  const isWeChat = /MicroMessenger/i.test(navigator.userAgent || "");
-  document.body.classList.toggle("is-wechat", isWeChat);
-  const panel = $("#wechat-panel");
-  const btn = $("#copy-link");
-  if (!panel || !btn) return;
-  panel.classList.toggle("hidden", !isWeChat && window.innerWidth > 640);
-  btn.addEventListener("click", async () => {
-    const url = location.href.split("#")[0];
-    try {
-      await navigator.clipboard.writeText(url);
-      btn.textContent = "已复制";
-    } catch (e) {
-      btn.textContent = "长按地址栏复制";
-    }
-    setTimeout(() => { btn.textContent = "复制链接"; }, 1800);
-  });
 }
 
 /* ---------- Corpus policy-only cleanup ---------- */
@@ -251,15 +231,6 @@ function initFilters() {
   Object.keys(m.year_count).sort().reverse().forEach((y) => {
     yearSel.insertAdjacentHTML("beforeend", `<option value="${y}">${y}（${m.year_count[y]}）</option>`);
   });
-  const catSel = $("#f-cat");
-  Object.keys(m.cat_count).forEach((c) => {
-    catSel.insertAdjacentHTML("beforeend",
-      `<option value="${c}">${m.cat_label[c] || c}（${m.cat_count[c]}）</option>`);
-  });
-  const orgSel = $("#f-org");
-  m.top_orgs.forEach(([org, n]) => {
-    orgSel.insertAdjacentHTML("beforeend", `<option value="${esc(org)}">${esc(org)}（${n}）</option>`);
-  });
   const thSel = $("#f-theme");
   (m.theme_facet || []).forEach(([name, n]) => {
     if (n > 0) thSel.insertAdjacentHTML("beforeend", `<option value="${esc(name)}">${esc(name)}（${n}）</option>`);
@@ -284,7 +255,7 @@ function initFilters() {
 function initBrowse() {
   let timer;
   $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(applyFilters, 200); });
-  ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-office", "#f-route", "#f-doc-state", "#f-sort"].forEach((s) =>
+  ["#f-year", "#f-theme", "#f-office", "#f-route", "#f-doc-state", "#f-sort"].forEach((s) =>
     $(s).addEventListener("change", applyFilters));
   $("#f-ministry").addEventListener("change", () => {
     $("#f-bureau").value = "";
@@ -359,15 +330,13 @@ function renderOfficeOptions() {
 
 function applyFilters() {
   const q = $("#q").value.trim().toLowerCase();
-  const y = $("#f-year").value, c = $("#f-cat").value, o = $("#f-org").value;
+  const y = $("#f-year").value;
   const th = $("#f-theme").value;
   const ministry = $("#f-ministry").value, bureau = $("#f-bureau").value, office = $("#f-office").value;
   const route = $("#f-route").value, docState = $("#f-doc-state").value;
   const sort = $("#f-sort").value;
   let arr = state.policies.filter((p) => {
     if (y && String(p.y) !== y) return false;
-    if (c && p.c !== c) return false;
-    if (o && (p.ogvk || p.ogk) !== o) return false;
     if (th && !(p.th || []).includes(th)) return false;
     if (ministry && !(p.tx?.ministryIds || []).includes(ministry)) return false;
     if (bureau && p.tx?.bureauId !== bureau) return false;
@@ -384,7 +353,6 @@ function applyFilters() {
   arr.sort((a, b) => sort === "date_asc" ? a.d.localeCompare(b.d) : b.d.localeCompare(a.d));
   state.filtered = arr;
   state.page = 1;
-  updateFilteredStat(arr.length);
   renderList();
 }
 
@@ -394,13 +362,7 @@ function initSummaryPanel() {
   $("#stat-policy-total").textContent = m.policy_total || m.total;
   $("#stat-interpretation-total").textContent = m.interpretation_total || 0;
   $("#stat-latest-year").textContent = m.year_range?.[1] || "-";
-  updateFilteredStat(m.policy_total || m.total);
   renderQualityPanel();
-}
-
-function updateFilteredStat(n) {
-  const el = $("#stat-filtered-total");
-  if (el) el.textContent = n;
 }
 
 function matchesDocState(p, stateName) {
@@ -448,15 +410,8 @@ function highlight(text, q) {
 }
 
 function itemHTML(p, q) {
-  const cat = state.meta.cat_label[p.c] || p.c;
   const docNo = p.pcv || p.pc || "";
   const issuer = p.ogv || p.og || "";
-  const meta = [
-    `<span class="chip">${esc(cat)}</span>`,
-    p.d ? `<span>${esc(p.d)}</span>` : "",
-    docNo ? `<span class="doc-no">${esc(docNo)}</span>` : "",
-    issuer ? `<span>${esc(issuer)}</span>` : "",
-  ].filter(Boolean).join("");
   const themes = (p.th || []).map((t) => `<span class="th-chip">${esc(t)}</span>`).join("");
   const confidence = p.tx?.confidence ? `置信度 ${Math.round(p.tx.confidence * 100)}%` : "";
   const evidence = p.tx?.evidence || (p.tx?.docPrefix ? `文号：${p.tx.docPrefix}` : "");
@@ -467,17 +422,22 @@ function itemHTML(p, q) {
     `<a href="${esc(item.u)}" target="_blank" rel="noopener"><strong>${esc(item.t)}</strong><span>${esc(item.d || "")}</span></a>`
   ).join("");
   return `<li class="item">
-    <h3><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(p.t, q)}</a></h3>
-    <div class="meta">${meta}</div>
+    <div class="policy-name-label">文件名</div>
+    <h3 class="policy-title"><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(p.t, q)}</a></h3>
+    <dl class="policy-fields">
+      <div><dt>文号</dt><dd>${docNo ? esc(docNo) : "未标注"}</dd></div>
+      <div><dt>发文机关</dt><dd>${issuer ? esc(issuer) : "未标注"}</dd></div>
+      <div><dt>发文日期</dt><dd>${p.d ? esc(p.d) : "未标注"}</dd></div>
+    </dl>
     ${taxonomy}
     ${themes ? `<div class="th-row">${themes}</div>` : ""}
     ${p.s ? `<p class="summary">${highlight(p.s, q)}…</p>` : ""}
-    ${interps ? `<div class="interp-row"><span>政策解读</span>${interps}</div>` : ""}
+    <div class="interp-row"><span>政策解读</span>${interps || `<em class="interp-empty">暂无关联解读</em>`}</div>
   </li>`;
 }
 
 function hasActiveBrowseFilter(q) {
-  return q || ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"]
+  return q || ["#f-year", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"]
     .some((s) => $(s).value);
 }
 
@@ -778,8 +738,11 @@ function initAbout() {
     `收录政策 ${m.total} 篇，年份覆盖 ${m.year_range[0]}–${m.year_range[1]}，数据构建于 ${m.built_at}。`;
   }
   if (footMeta) {
-    footMeta.textContent =
-      `卫生健康政策库 · 政策文件 ${m.policy_total || m.total} 篇 · 关联解读 ${m.interpretation_total || 0} 篇 · 更新于 ${m.built_at} · 数据来源：中国政府网政策文件库`;
+    footMeta.innerHTML = [
+      `<span>卫生健康政策库 · 政策文件 ${esc(String(m.policy_total || m.total))} 篇 · 关联解读 ${esc(String(m.interpretation_total || 0))} 篇</span>`,
+      `<span>数据来源：中国政府网政策文件库</span>`,
+      `<span>更新时间：${esc(m.built_at || "")}</span>`,
+    ].join("");
   }
 }
 

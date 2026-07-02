@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xujiann.github.io/health-policy/policy.html">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 <header class="top">
@@ -18,9 +18,9 @@
     <h1>卫生健康政策智能分析</h1>
     <p class="sub">汇集 2009 年新医改以来的国家卫生健康政策，支持检索、主题趋势分析与未来方向研判</p>
     <nav class="tabs">
+      <a class="tab tab-link" href="index.html">首页</a>
       <button class="tab active" data-view="browse">政策检索</button>
       <button class="tab" data-view="trend">趋势分析</button>
-      <a class="tab tab-link" href="index.html">首页</a>
       <a class="tab tab-link" href="about.html">关于</a>
     </nav>
   </div>
@@ -42,17 +42,6 @@
       <span>最新年份</span>
       <strong id="stat-latest-year">-</strong>
     </article>
-    <article>
-      <span>当前命中</span>
-      <strong id="stat-filtered-total">-</strong>
-    </article>
-  </section>
-  <section id="wechat-panel" class="wechat-panel hidden">
-    <div>
-      <strong>微信内浏览</strong>
-      <span>建议收藏本页或转发给自己；复制链接可在电脑端继续研究。</span>
-    </div>
-    <button id="copy-link" type="button">复制链接</button>
   </section>
 
   <!-- ============ 政策检索 ============ -->
@@ -60,12 +49,10 @@
     <div class="toolbar">
       <input id="q" type="search" placeholder="搜索标题 / 文号 / 摘要，如：分级诊疗、国办发〔2024〕…">
       <select id="f-year"><option value="">全部年份</option></select>
-      <select id="f-cat"><option value="">全部类别</option></select>
       <select id="f-theme"><option value="">全部主题</option></select>
       <select id="f-ministry"><option value="">全部部委</option></select>
       <select id="f-bureau"><option value="">全部司局</option></select>
       <select id="f-office"><option value="">全部处室</option></select>
-      <select id="f-org"><option value="">全部机关</option></select>
       <select id="f-route"><option value="">全部归口依据</option></select>
       <select id="f-doc-state"><option value="">全部文号/机关状态</option></select>
       <select id="f-sort">
@@ -118,6 +105,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=3"></script>
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>
