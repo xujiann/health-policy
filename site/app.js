@@ -29,7 +29,7 @@ async function boot() {
     state.excluded = prepared.excluded;
     state.policies = prepared.policies.map((p) => ({
       ...p,
-      tx: window.POLICY_TAXONOMY?.classify(p) || null
+      tx: p.txv || window.POLICY_TAXONOMY?.classify(p) || null
     }));
     attachInterpretations(state.policies, state.interpretations);
     state.meta = buildRuntimeMeta(state.policies, meta);
@@ -177,7 +177,8 @@ function buildRuntimeMeta(policies, sourceMeta) {
   policies.forEach((p) => {
     yearCount[p.y] = (yearCount[p.y] || 0) + 1;
     catCount[p.c] = (catCount[p.c] || 0) + 1;
-    orgCount[p.ogk] = (orgCount[p.ogk] || 0) + 1;
+    const orgKey = p.ogvk || p.ogk;
+    orgCount[orgKey] = (orgCount[orgKey] || 0) + 1;
     (p.th || []).forEach((th) => { themeCount[th] = (themeCount[th] || 0) + 1; });
   });
   const years = Object.keys(yearCount).map(Number).sort((a, b) => a - b);
@@ -342,13 +343,14 @@ function applyFilters() {
   let arr = state.policies.filter((p) => {
     if (y && String(p.y) !== y) return false;
     if (c && p.c !== c) return false;
-    if (o && p.ogk !== o) return false;
+    if (o && (p.ogvk || p.ogk) !== o) return false;
     if (th && !(p.th || []).includes(th)) return false;
     if (ministry && !(p.tx?.ministryIds || []).includes(ministry)) return false;
     if (bureau && p.tx?.bureauId !== bureau) return false;
     if (office && p.tx?.office !== office) return false;
     if (q) {
-      const hay = (p.t + " " + p.pc + " " + p.s + " " + p.og + " " + taxonomyText(p)).toLowerCase();
+      const hay = (p.t + " " + p.pc + " " + (p.pcv || "") + " " +
+        p.s + " " + p.og + " " + (p.ogv || "") + " " + taxonomyText(p)).toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -376,7 +378,7 @@ function updateFilteredStat(n) {
 
 function taxonomyText(p) {
   if (!p.tx) return "";
-  return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment}`;
+  return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment} ${p.tx.evidence || ""}`;
 }
 
 function highlight(text, q) {
@@ -389,15 +391,19 @@ function highlight(text, q) {
 
 function itemHTML(p, q) {
   const cat = state.meta.cat_label[p.c] || p.c;
+  const docNo = p.pcv || p.pc || "";
+  const issuer = p.ogv || p.og || "";
   const meta = [
     `<span class="chip">${esc(cat)}</span>`,
     p.d ? `<span>${esc(p.d)}</span>` : "",
-    p.pc ? `<span>${esc(p.pc)}</span>` : "",
-    p.og ? `<span>${esc(p.og)}</span>` : "",
+    docNo ? `<span class="doc-no">${esc(docNo)}</span>` : "",
+    issuer ? `<span>${esc(issuer)}</span>` : "",
   ].filter(Boolean).join("");
   const themes = (p.th || []).map((t) => `<span class="th-chip">${esc(t)}</span>`).join("");
+  const confidence = p.tx?.confidence ? `置信度 ${Math.round(p.tx.confidence * 100)}%` : "";
+  const evidence = p.tx?.evidence || (p.tx?.docPrefix ? `文号：${p.tx.docPrefix}` : "");
   const taxonomy = p.tx
-    ? `<div class="tax-row"><span>${esc(p.tx.ministryName)}</span><span>${esc(p.tx.bureauName)}</span><span>${esc(p.tx.office)}</span><em>${esc(p.tx.assignment)}</em>${p.tx.docPrefix ? `<em>文号：${esc(p.tx.docPrefix)}</em>` : ""}</div>`
+    ? `<div class="tax-row"><span>${esc(p.tx.ministryName)}</span><span>${esc(p.tx.bureauName)}</span><span>${esc(p.tx.office)}</span><em>${esc(p.tx.assignment)}</em>${confidence ? `<em>${esc(confidence)}</em>` : ""}${evidence ? `<em>依据：${esc(evidence)}</em>` : ""}</div>`
     : "";
   const interps = (p.interps || []).slice(0, 4).map((item) =>
     `<a href="${esc(item.u)}" target="_blank" rel="noopener"><strong>${esc(item.t)}</strong><span>${esc(item.d || "")}</span></a>`

@@ -21,6 +21,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from keywords import TAG_THEMES  # noqa: E402
+from policy_enrichment import enrich_policies  # noqa: E402
 
 DB_PATH = os.path.join(HERE, "policies.db")
 OUT = os.path.join(HERE, "site", "data")
@@ -71,7 +72,6 @@ def main():
     ).fetchall()
 
     policies = []
-    org_count = {}
     year_count = {}
     cat_count = {}
     for r in rows:
@@ -93,9 +93,14 @@ def main():
                 "th": th,
             }
         )
-        org_count[org] = org_count.get(org, 0) + 1
         year_count[str(r["pubyear"])] = year_count.get(str(r["pubyear"]), 0) + 1
         cat_count[r["category"]] = cat_count.get(r["category"], 0) + 1
+
+    policies = enrich_policies(policies)
+    org_count = {}
+    for p in policies:
+        org = p.get("ogvk") or p.get("ogk") or "未标注"
+        org_count[org] = org_count.get(org, 0) + 1
 
     # ---- 趋势：各 AI 主题逐年数量（基于 LLM 打标的语义标签）----
     years = sorted({p["y"] for p in policies})

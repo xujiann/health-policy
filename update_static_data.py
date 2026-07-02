@@ -15,6 +15,7 @@ import requests
 
 from harvest import CATEGORIES, API, UA, clean, is_relevant, parse_date
 from keywords import SEED_KEYWORDS, TAG_THEMES
+from policy_enrichment import enrich_policies
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "site", "data")
@@ -168,7 +169,8 @@ def rebuild_meta_and_trends(policies, previous_meta):
     for p in policies:
         year_count[str(p["y"])] = year_count.get(str(p["y"]), 0) + 1
         cat_count[p["c"]] = cat_count.get(p["c"], 0) + 1
-        org_count[p["ogk"]] = org_count.get(p["ogk"], 0) + 1
+        org_key = p.get("ogvk") or p.get("ogk") or "未标注"
+        org_count[org_key] = org_count.get(org_key, 0) + 1
         for th in p.get("th") or []:
             if th in TAG_THEMES:
                 theme_total[th] = theme_total.get(th, 0) + 1
@@ -211,7 +213,11 @@ def main():
     new_items = [p for pid, p in recent.items() if pid not in by_id]
     if new_items:
         by_id.update({p["id"]: p for p in new_items})
-        policies = sorted(by_id.values(), key=lambda p: p.get("d") or "", reverse=True)
+    policies = sorted(by_id.values(), key=lambda p: p.get("d") or "", reverse=True)
+    enriched = enrich_policies([dict(p) for p in policies])
+    changed = json.dumps(enriched, ensure_ascii=False, sort_keys=True) != json.dumps(policies, ensure_ascii=False, sort_keys=True)
+    if new_items or changed:
+        policies = enriched
         meta, trends = rebuild_meta_and_trends(policies, previous_meta)
         if not args.dry_run:
             dump_json("policies.json", policies)
