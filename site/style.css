@@ -28,6 +28,13 @@ main{min-height:60vh;padding-top:18px}
 .summary-panel article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .summary-panel span{display:block;color:var(--muted);font-size:12px}
 .summary-panel strong{display:block;color:var(--brand-d);font-size:24px;line-height:1.2;margin-top:3px}
+.wechat-panel{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f0fdf4;
+  border:1px solid #bbf7d0;border-radius:10px;margin:-2px 0 14px;padding:10px 12px;color:#14532d}
+.wechat-panel strong{display:block;font-size:13px}
+.wechat-panel span{font-size:12px;color:#166534}
+.wechat-panel button{border:1px solid #86efac;background:#fff;color:#166534;border-radius:8px;padding:7px 10px;
+  white-space:nowrap;cursor:pointer}
+.wechat-panel button:active{transform:translateY(1px)}
 
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:rgba(255,255,255,.72);
   border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
@@ -121,6 +128,16 @@ main{min-height:60vh;padding-top:18px}
 .about h2{color:var(--brand-d)}
 .about h3{margin-top:22px;color:var(--brand-d);font-size:16px}
 
+.wechat-guide{overflow:hidden}
+.wechat-guide .about-hero p{max-width:760px;color:#4b5563;line-height:1.75}
+.wechat-qr{display:grid;grid-template-columns:240px minmax(0,1fr);gap:22px;align-items:center;
+  margin-top:18px;padding:18px;background:#f8fafc;border:1px solid var(--line);border-radius:12px}
+.wechat-qr img{width:220px;height:220px;background:#fff;border:1px solid var(--line);border-radius:10px;
+  padding:10px;box-shadow:0 12px 30px rgba(15,23,42,.08)}
+.wechat-qr h3{margin-top:0}
+.wechat-qr p{line-height:1.7;color:#4b5563}
+.wechat-qr a{word-break:break-all;color:var(--brand-d);font-weight:700}
+
 .foot{padding:24px 16px 40px;color:var(--muted);font-size:12px;text-align:center}
 
 @media(max-width:640px){
@@ -135,6 +152,9 @@ main{min-height:60vh;padding-top:18px}
   .summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .summary-panel article{padding:10px 11px}
   .summary-panel strong{font-size:20px}
+  .wechat-panel{align-items:flex-start;margin-top:-4px}
+  .wechat-panel button{padding:8px 10px}
+  body.is-wechat .toolbar{position:static}
   .toolbar input#q{flex:1 1 100%;min-width:0}
   .toolbar select{flex:1 1 calc(50% - 4px);min-width:0;font-size:13px;padding:9px 8px}
   .toolbar #f-sort{flex-basis:100%}
@@ -164,6 +184,8 @@ main{min-height:60vh;padding-top:18px}
   .forecast-head dl div{min-width:0}
   .about-page{padding:14px 14px 20px}
   .about-hero h2{font-size:22px}
+  .wechat-qr{grid-template-columns:1fr;justify-items:center;text-align:left;padding:14px;gap:12px}
+  .wechat-qr img{width:min(220px,100%);height:auto}
 
   .pager button{padding:9px 14px;font-size:14px}
 

@@ -35,6 +35,7 @@ async function boot() {
     state.meta = buildRuntimeMeta(state.policies, meta);
     state.trends = buildRuntimeTrends(state.policies, tr);
     $("#loading").classList.add("hidden");
+    initWeChatPanel();
     initSummaryPanel();
     initFilters();
     initTabs();
@@ -46,6 +47,25 @@ async function boot() {
     $("#loading").textContent = "数据加载失败：" + e.message +
       "（请确认已运行 build_site.py 生成 data/ 下的 JSON，并通过本地服务访问）";
   }
+}
+
+function initWeChatPanel() {
+  const isWeChat = /MicroMessenger/i.test(navigator.userAgent || "");
+  document.body.classList.toggle("is-wechat", isWeChat);
+  const panel = $("#wechat-panel");
+  const btn = $("#copy-link");
+  if (!panel || !btn) return;
+  panel.classList.toggle("hidden", !isWeChat && window.innerWidth > 640);
+  btn.addEventListener("click", async () => {
+    const url = "https://xujiann.github.io/health-policy/";
+    try {
+      await navigator.clipboard.writeText(url);
+      btn.textContent = "已复制";
+    } catch (e) {
+      btn.textContent = "长按地址栏复制";
+    }
+    setTimeout(() => { btn.textContent = "复制链接"; }, 1800);
+  });
 }
 
 /* ---------- Corpus policy-only cleanup ---------- */

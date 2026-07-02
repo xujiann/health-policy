@@ -3,8 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b6e5f">
+<meta name="description" content="卫生健康政策智能分析：政策文件检索、部委司局筛选、主题趋势与未来方向研判。">
+<meta property="og:title" content="卫生健康政策智能分析">
+<meta property="og:description" content="检索卫生健康政策文件，按部委、司局、处室筛选，并查看政策趋势。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://xujiann.github.io/health-policy/">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <header class="top">
@@ -39,6 +45,13 @@
       <span>当前命中</span>
       <strong id="stat-filtered-total">-</strong>
     </article>
+  </section>
+  <section id="wechat-panel" class="wechat-panel hidden">
+    <div>
+      <strong>微信内浏览</strong>
+      <span>建议收藏本页或转发给自己；复制链接可在电脑端继续研究。</span>
+    </div>
+    <button id="copy-link" type="button">复制链接</button>
   </section>
 
   <!-- ============ 政策检索 ============ -->
@@ -100,6 +113,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=3"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>
