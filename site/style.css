@@ -73,9 +73,10 @@ main{min-height:60vh;padding-top:18px}
 .item h3{margin:0 0 6px;font-size:16px;font-weight:600}
 .item h3 a{color:var(--ink)}
 .item h3 a:hover{color:var(--brand)}
-.policy-name-label{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:2px}
 .policy-title{line-height:1.45}
-.policy-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 8px}
+.policy-docno{display:inline-flex;max-width:100%;margin:2px 0 8px;padding:2px 8px;border-radius:7px;
+  background:#f8fafc;border:1px solid var(--line);color:#475569;font-size:12px;font-weight:700;word-break:break-all}
+.policy-fields{display:grid;grid-template-columns:1.4fr .8fr;gap:8px;margin:8px 0}
 .policy-fields div{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
 .policy-fields dt{font-size:12px;color:var(--muted);margin-bottom:3px}
 .policy-fields dd{margin:0;color:#0f172a;font-size:13px;font-weight:700;word-break:break-word}

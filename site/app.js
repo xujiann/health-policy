@@ -464,10 +464,9 @@ function itemHTML(p, q) {
   ).join("");
   const summary = cleanSummary(p, docNo, issuer);
   return `<li class="item">
-    <div class="policy-name-label">文件名</div>
     <h3 class="policy-title"><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(title, q)}</a></h3>
+    ${docNo ? `<div class="policy-docno">${esc(docNo)}</div>` : ""}
     <dl class="policy-fields">
-      <div><dt>文号</dt><dd>${docNo ? esc(docNo) : "未标注"}</dd></div>
       <div><dt>发文机关</dt><dd>${issuer ? esc(issuer) : "未标注"}</dd></div>
       <div><dt>发文日期</dt><dd>${p.d ? esc(p.d) : "未标注"}</dd></div>
     </dl>
