@@ -57,7 +57,7 @@ function initWeChatPanel() {
   if (!panel || !btn) return;
   panel.classList.toggle("hidden", !isWeChat && window.innerWidth > 640);
   btn.addEventListener("click", async () => {
-    const url = "https://xujiann.github.io/health-policy/";
+    const url = location.href.split("#")[0];
     try {
       await navigator.clipboard.writeText(url);
       btn.textContent = "已复制";

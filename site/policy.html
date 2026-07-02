@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b6e5f">
+<meta name="description" content="卫生健康政策智能分析：政策文件检索、部委司局筛选、主题趋势与未来方向研判。">
+<meta property="og:title" content="卫生健康政策智能分析">
+<meta property="og:description" content="检索卫生健康政策文件，按部委、司局、处室筛选，并查看政策趋势。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://xujiann.github.io/health-policy/policy.html">
+<title>卫生健康政策智能分析 · 检索与趋势预测</title>
+<link rel="stylesheet" href="style.css?v=15">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>卫生健康政策智能分析</h1>
+    <p class="sub">汇集 2009 年新医改以来的国家卫生健康政策，支持检索、主题趋势分析与未来方向研判</p>
+    <nav class="tabs">
+      <button class="tab active" data-view="browse">政策检索</button>
+      <button class="tab" data-view="trend">趋势分析</button>
+      <a class="tab tab-link" href="index.html">首页</a>
+      <a class="tab tab-link" href="about.html">关于</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 加载状态 -->
+  <div id="loading" class="loading">正在加载政策数据…</div>
+  <section id="summary-panel" class="summary-panel hidden">
+    <article>
+      <span>政策文件</span>
+      <strong id="stat-policy-total">-</strong>
+    </article>
+    <article>
+      <span>关联解读</span>
+      <strong id="stat-interpretation-total">-</strong>
+    </article>
+    <article>
+      <span>最新年份</span>
+      <strong id="stat-latest-year">-</strong>
+    </article>
+    <article>
+      <span>当前命中</span>
+      <strong id="stat-filtered-total">-</strong>
+    </article>
+  </section>
+  <section id="wechat-panel" class="wechat-panel hidden">
+    <div>
+      <strong>微信内浏览</strong>
+      <span>建议收藏本页或转发给自己；复制链接可在电脑端继续研究。</span>
+    </div>
+    <button id="copy-link" type="button">复制链接</button>
+  </section>
+
+  <!-- ============ 政策检索 ============ -->
+  <section id="view-browse" class="view">
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="搜索标题 / 文号 / 摘要，如：分级诊疗、国办发〔2024〕…">
+      <select id="f-year"><option value="">全部年份</option></select>
+      <select id="f-cat"><option value="">全部类别</option></select>
+      <select id="f-theme"><option value="">全部主题</option></select>
+      <select id="f-ministry"><option value="">全部部委</option></select>
+      <select id="f-bureau"><option value="">全部司局</option></select>
+      <select id="f-office"><option value="">全部处室</option></select>
+      <select id="f-org"><option value="">全部机关</option></select>
+      <select id="f-route"><option value="">全部归口依据</option></select>
+      <select id="f-doc-state"><option value="">全部文号/机关状态</option></select>
+      <select id="f-sort">
+        <option value="date_desc">最新优先</option>
+        <option value="date_asc">最早优先</option>
+      </select>
+    </div>
+    <div id="quality-panel" class="quality-panel hidden"></div>
+    <div id="result-info" class="result-info"></div>
+    <ul id="list" class="list"></ul>
+    <div id="pager" class="pager"></div>
+  </section>
+
+  <!-- ============ 趋势分析 ============ -->
+  <section id="view-trend" class="view hidden">
+    <div class="trend-intro">
+      <p>预置主题曲线基于 <strong>AI 主题打标</strong>——由模型逐篇判定每条政策“真正属于哪些主题”，
+         而非字面词匹配，能排除顺带提及、归并同义说法。点击图例可隐藏/显示曲线；选主题看其政策列表。
+         也可在下方输入<strong>任意关键词</strong>即时生成逐年曲线（虚线 ★）与预置主题对比。</p>
+    </div>
+    <div class="rel-mode">
+      <span class="rel-label">自定义关键词口径：</span>
+      <label><input type="radio" name="relmode" value="all" checked> 标题+摘要（宽）</label>
+      <label><input type="radio" name="relmode" value="strong"> 仅标题（严）</label>
+      <span class="muted rel-hint">此口径只影响你输入的<strong>自定义关键词</strong>曲线；预置主题始终用 AI 标签。</span>
+    </div>
+    <div class="custom-kw">
+      <input id="kw-input" type="text" placeholder="输入任意关键词，如：罕见病、生育保险、DRG（多个词用逗号=任一命中）">
+      <button id="kw-add">＋ 加入对比</button>
+      <label class="preset-toggle"><input type="checkbox" id="show-presets" checked> 显示预置主题</label>
+      <div id="kw-suggest" class="kw-suggest"></div>
+      <div id="kw-chips" class="kw-chips"></div>
+    </div>
+    <div class="chart-box"><canvas id="chart"></canvas></div>
+    <div id="forecast-box" class="forecast-box"></div>
+    <div class="theme-detail">
+      <label>查看主题命中政策：
+        <select id="theme-pick"></select>
+      </label>
+      <span id="theme-count" class="muted"></span>
+    </div>
+    <ul id="theme-list" class="list"></ul>
+  </section>
+
+</main>
+
+<footer class="foot wrap">
+  <span id="foot-meta"></span>
+</footer>
+
+<script src="vendor/chart.umd.min.js"></script>
+<script src="taxonomy.js?v=3"></script>
+<script src="app.js?v=17"></script>
+</body>
+</html>
