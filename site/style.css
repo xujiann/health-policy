@@ -11,7 +11,7 @@ a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 
 .portal-body{background:#f4f8f7}
-.portal{max-width:760px;margin:0 auto;padding:18px 16px 32px}
+.portal{max-width:760px;min-height:100svh;margin:0 auto;padding:18px 16px max(32px,env(safe-area-inset-bottom))}
 .portal-hero{padding:18px 2px 14px}
 .portal-mark{width:54px;height:54px;border-radius:14px;border:1px solid var(--line);background:#fff;padding:6px;
   box-shadow:0 10px 24px rgba(15,23,42,.08)}
@@ -24,6 +24,7 @@ a:hover{text-decoration:underline}
 .portal-card{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;text-decoration:none;background:#fff;
   border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 10px 26px rgba(15,23,42,.06)}
 .portal-card:hover{text-decoration:none;border-color:#99f6e4}
+.portal-card:active{transform:translateY(1px);box-shadow:0 6px 18px rgba(15,23,42,.08)}
 .portal-card.primary{border-color:#99f6e4;background:#f0fdfa}
 .portal-card-index{grid-row:1/4;display:grid;place-items:center;width:42px;height:42px;border-radius:10px;
   background:#e0f2fe;color:#075985;font-weight:800;font-size:13px}
@@ -31,9 +32,6 @@ a:hover{text-decoration:underline}
 .portal-card strong{font-size:18px;color:#0f172a;line-height:1.3}
 .portal-card small{color:#475569;font-size:13px;line-height:1.6}
 .portal-card em{font-style:normal;color:#0b6e5f;font-size:13px;font-weight:700;margin-top:2px}
-.portal-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0 0}
-.portal-strip a{text-align:center;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:10px;
-  padding:10px 6px;color:#1e3a8a;font-size:13px;font-weight:700}
 
 .top{background:linear-gradient(135deg,var(--brand),var(--brand-d));color:#fff;padding:22px 0 0}
 .top h1{margin:0;font-size:26px;letter-spacing:1px}
@@ -182,7 +180,6 @@ main{min-height:60vh;padding-top:18px}
   .portal-hero h1{font-size:25px}
   .portal-card{padding:14px;grid-template-columns:38px 1fr}
   .portal-card-index{width:38px;height:38px}
-  .portal-strip{grid-template-columns:1fr}
 
   /* 筛选：搜索框整行，下拉两列自适应，排序单独整行 */
   .toolbar{gap:8px}
