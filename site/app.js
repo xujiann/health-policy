@@ -409,21 +409,63 @@ function highlight(text, q) {
     "</mark>" + esc(text.slice(i + q.length));
 }
 
+function removeRepeatedLead(text, parts) {
+  let out = (text || "").trim();
+  const compact = (s) => (s || "").replace(/\s+/g, "").replace(/[　\s:：，,。；;、]+$/g, "");
+  parts.filter(Boolean).sort((a, b) => b.length - a.length).forEach((part) => {
+    const raw = (part || "").trim();
+    const simple = compact(raw);
+    if (!out || !simple) return;
+    const outSimple = compact(out);
+    if (out.startsWith(raw)) {
+      out = out.slice(raw.length).replace(/^[\s　:：，,。；;、-]+/, "");
+    } else if (outSimple.startsWith(simple) && simple.length > 8) {
+      out = out.replace(new RegExp("^.{0," + Math.min(raw.length + 12, out.length) + "}?[\\s　:：，,。；;、-]*"), "");
+    }
+  });
+  return out.trim();
+}
+
+function cleanSummary(p, docNo, issuer) {
+  let summary = removeRepeatedLead(p.s || "", [p.t, docNo, issuer]);
+  const intent = summary.search(/[为根依按现]/);
+  if (intent > 20 && intent < 160) summary = summary.slice(intent);
+  if (!summary || summary.length < 12) return "";
+  return summary.length > 180 ? summary.slice(0, 180).trim() + "…" : summary;
+}
+
+function displayTitle(p, docNo, issuer) {
+  let title = (p.t || "").trim();
+  if (docNo) title = title.replace(docNo, "").replace(/\s{2,}/g, " ").trim();
+  const aboutIdx = title.indexOf("关于");
+  if (aboutIdx > 8 && title.length - aboutIdx > 8) {
+    title = title.slice(aboutIdx).trim();
+  }
+  const issuers = (issuer || "").split(/[、，,]\s*/).filter((x) => x.length > 3);
+  issuers.sort((a, b) => b.length - a.length).forEach((name) => {
+    if (title.startsWith(name) && title.length - name.length > 8) {
+      title = title.slice(name.length).replace(/^[\s　:：，,。；;、-]+/, "");
+    }
+  });
+  return title || p.t || "";
+}
+
 function itemHTML(p, q) {
   const docNo = p.pcv || p.pc || "";
   const issuer = p.ogv || p.og || "";
+  const title = displayTitle(p, docNo, issuer);
   const themes = (p.th || []).map((t) => `<span class="th-chip">${esc(t)}</span>`).join("");
-  const confidence = p.tx?.confidence ? `置信度 ${Math.round(p.tx.confidence * 100)}%` : "";
-  const evidence = p.tx?.evidence || (p.tx?.docPrefix ? `文号：${p.tx.docPrefix}` : "");
+  const route = p.tx ? [p.tx.ministryName, p.tx.bureauName, p.tx.office].filter(Boolean).join(" / ") : "";
   const taxonomy = p.tx
-    ? `<div class="tax-row"><span>${esc(p.tx.ministryName)}</span><span>${esc(p.tx.bureauName)}</span><span>${esc(p.tx.office)}</span><em>${esc(p.tx.assignment)}</em>${confidence ? `<em>${esc(confidence)}</em>` : ""}${evidence ? `<em>依据：${esc(evidence)}</em>` : ""}</div>`
+    ? `<div class="policy-route"><span>归口</span><strong>${esc(route)}</strong><em>${esc(p.tx.assignment)}</em></div>`
     : "";
   const interps = (p.interps || []).slice(0, 4).map((item) =>
     `<a href="${esc(item.u)}" target="_blank" rel="noopener"><strong>${esc(item.t)}</strong><span>${esc(item.d || "")}</span></a>`
   ).join("");
+  const summary = cleanSummary(p, docNo, issuer);
   return `<li class="item">
     <div class="policy-name-label">文件名</div>
-    <h3 class="policy-title"><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(p.t, q)}</a></h3>
+    <h3 class="policy-title"><a href="${esc(p.u)}" target="_blank" rel="noopener">${highlight(title, q)}</a></h3>
     <dl class="policy-fields">
       <div><dt>文号</dt><dd>${docNo ? esc(docNo) : "未标注"}</dd></div>
       <div><dt>发文机关</dt><dd>${issuer ? esc(issuer) : "未标注"}</dd></div>
@@ -431,8 +473,8 @@ function itemHTML(p, q) {
     </dl>
     ${taxonomy}
     ${themes ? `<div class="th-row">${themes}</div>` : ""}
-    ${p.s ? `<p class="summary">${highlight(p.s, q)}…</p>` : ""}
-    <div class="interp-row"><span>政策解读</span>${interps || `<em class="interp-empty">暂无关联解读</em>`}</div>
+    ${summary ? `<p class="summary">${highlight(summary, q)}</p>` : ""}
+    ${interps ? `<div class="interp-row"><span>政策解读</span>${interps}</div>` : ""}
   </li>`;
 }
 
