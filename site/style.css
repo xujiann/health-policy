@@ -41,6 +41,10 @@ main{min-height:60vh;padding-top:18px}
 .toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
   font-size:14px;background:var(--card)}
 .toolbar input#q{flex:1;min-width:240px}
+.quality-panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:-4px 0 12px}
+.quality-panel article{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.quality-panel span{display:block;color:var(--muted);font-size:11px}
+.quality-panel strong{display:block;color:#0f172a;font-size:15px;margin-top:2px}
 .result-info{color:var(--muted);font-size:13px;margin-bottom:10px}
 
 .list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
@@ -155,6 +159,8 @@ main{min-height:60vh;padding-top:18px}
   .summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .summary-panel article{padding:10px 11px}
   .summary-panel strong{font-size:20px}
+  .quality-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .quality-panel article{padding:8px 9px}
   .wechat-panel{align-items:flex-start;margin-top:-4px}
   .wechat-panel button{padding:8px 10px}
   body.is-wechat .toolbar{position:static}

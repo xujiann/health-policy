@@ -173,12 +173,21 @@ function attachInterpretations(policies, interpretations) {
 }
 
 function buildRuntimeMeta(policies, sourceMeta) {
-  const yearCount = {}, catCount = {}, orgCount = {}, themeCount = {};
+  const yearCount = {}, catCount = {}, orgCount = {}, themeCount = {}, routeCount = {};
+  const quality = { docOfficial: 0, docExtracted: 0, docMissing: 0, orgOfficial: 0, orgExtracted: 0, orgMissing: 0 };
   policies.forEach((p) => {
     yearCount[p.y] = (yearCount[p.y] || 0) + 1;
     catCount[p.c] = (catCount[p.c] || 0) + 1;
     const orgKey = p.ogvk || p.ogk;
     orgCount[orgKey] = (orgCount[orgKey] || 0) + 1;
+    const route = p.tx?.assignment || "未归口";
+    routeCount[route] = (routeCount[route] || 0) + 1;
+    if (p.pcs === "official_field") quality.docOfficial += 1;
+    else if (p.pcv) quality.docExtracted += 1;
+    else quality.docMissing += 1;
+    if (p.ogs === "official_field") quality.orgOfficial += 1;
+    else if (p.ogv) quality.orgExtracted += 1;
+    else quality.orgMissing += 1;
     (p.th || []).forEach((th) => { themeCount[th] = (themeCount[th] || 0) + 1; });
   });
   const years = Object.keys(yearCount).map(Number).sort((a, b) => a - b);
@@ -193,6 +202,8 @@ function buildRuntimeMeta(policies, sourceMeta) {
     year_count: Object.fromEntries(Object.entries(yearCount).sort((a, b) => Number(a[0]) - Number(b[0]))),
     top_orgs: Object.entries(orgCount).sort((a, b) => b[1] - a[1]).slice(0, 40),
     theme_facet: Object.entries(themeCount).sort((a, b) => b[1] - a[1]),
+    route_count: routeCount,
+    quality,
   };
 }
 
@@ -253,6 +264,18 @@ function initFilters() {
   (m.theme_facet || []).forEach(([name, n]) => {
     if (n > 0) thSel.insertAdjacentHTML("beforeend", `<option value="${esc(name)}">${esc(name)}（${n}）</option>`);
   });
+  const routeSel = $("#f-route");
+  Object.entries(m.route_count || {}).sort((a, b) => b[1] - a[1]).forEach(([name, n]) => {
+    routeSel.insertAdjacentHTML("beforeend", `<option value="${esc(name)}">${esc(name)}（${n}）</option>`);
+  });
+  $("#f-doc-state").insertAdjacentHTML("beforeend", [
+    `<option value="doc_official">官方文号（${m.quality.docOfficial}）</option>`,
+    `<option value="doc_extracted">抽取文号（${m.quality.docExtracted}）</option>`,
+    `<option value="doc_missing">缺少文号（${m.quality.docMissing}）</option>`,
+    `<option value="org_official">官方机关（${m.quality.orgOfficial}）</option>`,
+    `<option value="org_extracted">抽取机关（${m.quality.orgExtracted}）</option>`,
+    `<option value="org_missing">缺少机关（${m.quality.orgMissing}）</option>`,
+  ].join(""));
   renderMinistryOptions();
   renderBureauOptions();
   renderOfficeOptions();
@@ -261,7 +284,7 @@ function initFilters() {
 function initBrowse() {
   let timer;
   $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(applyFilters, 200); });
-  ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-office", "#f-sort"].forEach((s) =>
+  ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-office", "#f-route", "#f-doc-state", "#f-sort"].forEach((s) =>
     $(s).addEventListener("change", applyFilters));
   $("#f-ministry").addEventListener("change", () => {
     $("#f-bureau").value = "";
@@ -339,6 +362,7 @@ function applyFilters() {
   const y = $("#f-year").value, c = $("#f-cat").value, o = $("#f-org").value;
   const th = $("#f-theme").value;
   const ministry = $("#f-ministry").value, bureau = $("#f-bureau").value, office = $("#f-office").value;
+  const route = $("#f-route").value, docState = $("#f-doc-state").value;
   const sort = $("#f-sort").value;
   let arr = state.policies.filter((p) => {
     if (y && String(p.y) !== y) return false;
@@ -348,6 +372,8 @@ function applyFilters() {
     if (ministry && !(p.tx?.ministryIds || []).includes(ministry)) return false;
     if (bureau && p.tx?.bureauId !== bureau) return false;
     if (office && p.tx?.office !== office) return false;
+    if (route && p.tx?.assignment !== route) return false;
+    if (docState && !matchesDocState(p, docState)) return false;
     if (q) {
       const hay = (p.t + " " + p.pc + " " + (p.pcv || "") + " " +
         p.s + " " + p.og + " " + (p.ogv || "") + " " + taxonomyText(p)).toLowerCase();
@@ -369,11 +395,43 @@ function initSummaryPanel() {
   $("#stat-interpretation-total").textContent = m.interpretation_total || 0;
   $("#stat-latest-year").textContent = m.year_range?.[1] || "-";
   updateFilteredStat(m.policy_total || m.total);
+  renderQualityPanel();
 }
 
 function updateFilteredStat(n) {
   const el = $("#stat-filtered-total");
   if (el) el.textContent = n;
+}
+
+function matchesDocState(p, stateName) {
+  if (stateName === "doc_official") return p.pcs === "official_field";
+  if (stateName === "doc_extracted") return p.pcv && p.pcs !== "official_field";
+  if (stateName === "doc_missing") return !p.pcv;
+  if (stateName === "org_official") return p.ogs === "official_field";
+  if (stateName === "org_extracted") return p.ogv && p.ogs !== "official_field";
+  if (stateName === "org_missing") return !p.ogv;
+  return true;
+}
+
+function renderQualityPanel() {
+  const m = state.meta;
+  const panel = $("#quality-panel");
+  if (!panel) return;
+  const route = m.route_count || {};
+  const q = m.quality || {};
+  const total = m.policy_total || m.total || 0;
+  const items = [
+    ["文号覆盖", `${(q.docOfficial || 0) + (q.docExtracted || 0)}/${total}`],
+    ["机关覆盖", `${(q.orgOfficial || 0) + (q.orgExtracted || 0)}/${total}`],
+    ["文号归口", route["文号归口"] || 0],
+    ["机关归口", route["机关归口"] || 0],
+    ["缺少文号", q.docMissing || 0],
+    ["缺少机关", q.orgMissing || 0],
+  ];
+  panel.innerHTML = items.map(([label, value]) =>
+    `<article><span>${esc(label)}</span><strong>${esc(String(value))}</strong></article>`
+  ).join("");
+  panel.classList.remove("hidden");
 }
 
 function taxonomyText(p) {
@@ -419,7 +477,7 @@ function itemHTML(p, q) {
 }
 
 function hasActiveBrowseFilter(q) {
-  return q || ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-ministry", "#f-bureau", "#f-office"]
+  return q || ["#f-year", "#f-cat", "#f-org", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"]
     .some((s) => $(s).value);
 }
 

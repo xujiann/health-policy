@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xujiann.github.io/health-policy/">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 <header class="top">
@@ -65,11 +65,14 @@
       <select id="f-bureau"><option value="">全部司局</option></select>
       <select id="f-office"><option value="">全部处室</option></select>
       <select id="f-org"><option value="">全部机关</option></select>
+      <select id="f-route"><option value="">全部归口依据</option></select>
+      <select id="f-doc-state"><option value="">全部文号/机关状态</option></select>
       <select id="f-sort">
         <option value="date_desc">最新优先</option>
         <option value="date_asc">最早优先</option>
       </select>
     </div>
+    <div id="quality-panel" class="quality-panel hidden"></div>
     <div id="result-info" class="result-info"></div>
     <ul id="list" class="list"></ul>
     <div id="pager" class="pager"></div>
@@ -114,6 +117,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=3"></script>
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
