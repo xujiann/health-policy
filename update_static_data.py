@@ -200,8 +200,8 @@ def rebuild_meta_and_trends(policies, previous_meta):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--days", type=int, default=21)
-    parser.add_argument("--pages", type=int, default=2)
+    parser.add_argument("--days", type=int, default=45)
+    parser.add_argument("--pages", type=int, default=3)
     parser.add_argument("--all-keywords", action="store_true", help="scan every seed keyword; slower")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -223,7 +223,14 @@ def main():
             dump_json("policies.json", policies)
             dump_json("meta.json", meta)
             dump_json("trends.json", trends)
-    print(json.dumps({"new": len(new_items), "total": len(by_id), "dry_run": args.dry_run}, ensure_ascii=False))
+    print(json.dumps({
+        "new": len(new_items),
+        "total": len(by_id),
+        "days": args.days,
+        "pages": args.pages,
+        "all_keywords": args.all_keywords,
+        "dry_run": args.dry_run,
+    }, ensure_ascii=False))
 
 
 if __name__ == "__main__":
