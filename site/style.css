@@ -66,7 +66,13 @@ main{min-height:60vh;padding-top:18px}
 .toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
   font-size:14px;background:var(--card)}
 .toolbar input#q{flex:1;min-width:240px}
-.quality-panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:-4px 0 12px}
+.quality-details{margin:-4px 0 12px}
+.quality-details summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--brand-d);
+  background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:700}
+.quality-details summary::-webkit-details-marker{display:none}
+.quality-details summary::after{content:"›";font-size:16px;line-height:1;transition:transform .18s ease}
+.quality-details[open] summary::after{transform:rotate(90deg)}
+.quality-panel{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin:8px 0 0}
 .quality-panel article{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:9px 10px}
 .quality-panel span{display:block;color:var(--muted);font-size:11px}
 .quality-panel strong{display:block;color:#0f172a;font-size:15px;margin-top:2px}

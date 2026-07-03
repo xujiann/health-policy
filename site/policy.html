@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xujiann.github.io/health-policy/policy.html">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=24">
+<link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
 <header class="top">
@@ -60,7 +60,10 @@
         <option value="date_asc">最早优先</option>
       </select>
     </div>
-    <div id="quality-panel" class="quality-panel hidden"></div>
+    <details id="quality-details" class="quality-details hidden">
+      <summary>数据质量</summary>
+      <div id="quality-panel" class="quality-panel"></div>
+    </details>
     <div id="result-info" class="result-info"></div>
     <ul id="list" class="list"></ul>
     <div id="pager" class="pager"></div>
@@ -105,6 +108,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=3"></script>
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

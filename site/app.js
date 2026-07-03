@@ -393,7 +393,7 @@ function renderQualityPanel() {
   panel.innerHTML = items.map(([label, value]) =>
     `<article><span>${esc(label)}</span><strong>${esc(String(value))}</strong></article>`
   ).join("");
-  panel.classList.remove("hidden");
+  $("#quality-details")?.classList.remove("hidden");
 }
 
 function taxonomyText(p) {
