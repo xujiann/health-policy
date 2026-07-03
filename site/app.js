@@ -257,6 +257,11 @@ function initBrowse() {
   $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(applyFilters, 200); });
   ["#f-year", "#f-theme", "#f-office", "#f-route", "#f-doc-state", "#f-sort"].forEach((s) =>
     $(s).addEventListener("change", applyFilters));
+  $("#active-filters")?.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-clear]");
+    if (!button) return;
+    clearBrowseFilter(button.dataset.clear);
+  });
   $("#f-ministry").addEventListener("change", () => {
     $("#f-bureau").value = "";
     $("#f-office").value = "";
@@ -269,6 +274,62 @@ function initBrowse() {
     renderOfficeOptions();
     applyFilters();
   });
+}
+
+function selectedText(selector) {
+  const sel = $(selector);
+  if (!sel || !sel.value) return "";
+  const text = sel.options[sel.selectedIndex]?.textContent || "";
+  return text.replace(/（\d+）$/, "");
+}
+
+function activeFilterItems(q) {
+  const items = [];
+  if (q) items.push(["q", "关键词", q]);
+  [
+    ["year", "年份", "#f-year"],
+    ["theme", "主题", "#f-theme"],
+    ["ministry", "部委", "#f-ministry"],
+    ["bureau", "司局", "#f-bureau"],
+    ["office", "处室", "#f-office"],
+    ["route", "归口依据", "#f-route"],
+    ["doc-state", "文号/机关", "#f-doc-state"],
+  ].forEach(([key, label, selector]) => {
+    const value = selectedText(selector);
+    if (value) items.push([key, label, value]);
+  });
+  return items;
+}
+
+function clearBrowseFilter(key) {
+  if (key === "all") {
+    ["#q", "#f-year", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"].forEach((selector) => {
+      $(selector).value = "";
+    });
+    $("#f-sort").value = "date_desc";
+  } else if (key === "q") {
+    $("#q").value = "";
+  } else if (key === "year") {
+    $("#f-year").value = "";
+  } else if (key === "theme") {
+    $("#f-theme").value = "";
+  } else if (key === "ministry") {
+    $("#f-ministry").value = "";
+    $("#f-bureau").value = "";
+    $("#f-office").value = "";
+  } else if (key === "bureau") {
+    $("#f-bureau").value = "";
+    $("#f-office").value = "";
+  } else if (key === "office") {
+    $("#f-office").value = "";
+  } else if (key === "route") {
+    $("#f-route").value = "";
+  } else if (key === "doc-state") {
+    $("#f-doc-state").value = "";
+  }
+  renderBureauOptions();
+  renderOfficeOptions();
+  applyFilters();
 }
 
 function countBy(items, keyFn) {
@@ -482,13 +543,36 @@ function hasActiveBrowseFilter(q) {
     .some((s) => $(s).value);
 }
 
+function renderActiveFilters(q) {
+  const box = $("#active-filters");
+  const items = activeFilterItems(q);
+  const advancedCount = items.filter(([key]) => ["ministry", "bureau", "office", "route", "doc-state"].includes(key)).length;
+  const advancedBadge = $("#advanced-filter-count");
+  if (advancedBadge) {
+    advancedBadge.textContent = advancedCount ? `${advancedCount}` : "";
+    advancedBadge.classList.toggle("hidden", !advancedCount);
+  }
+  if (!box) return;
+  if (!items.length) {
+    box.classList.add("hidden");
+    box.innerHTML = "";
+    return;
+  }
+  box.classList.remove("hidden");
+  box.innerHTML = items.map(([key, label, value]) =>
+    `<button type="button" data-clear="${esc(key)}"><span>${esc(label)}</span>${esc(value)}</button>`
+  ).join("") + `<button type="button" class="clear-all" data-clear="all">重置筛选</button>`;
+}
+
 function renderList() {
-  const q = $("#q").value.trim().toLowerCase();
+  const qText = $("#q").value.trim();
+  const q = qText.toLowerCase();
   const total = state.filtered.length;
   const pages = Math.max(1, Math.ceil(total / PAGE));
   state.page = Math.min(state.page, pages);
   const start = (state.page - 1) * PAGE;
   const slice = state.filtered.slice(start, start + PAGE);
+  renderActiveFilters(qText);
   $("#result-info").textContent = `共 ${total} 篇` + (hasActiveBrowseFilter(q) ? "（已筛选）" : "");
   $("#list").innerHTML = slice.map((p) => itemHTML(p, q)).join("") ||
     `<li class="item muted">没有匹配的政策，换个关键词试试。</li>`;
