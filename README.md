@@ -115,6 +115,8 @@ python tag_policies.py --retag    # 改了 TAG_THEMES 后全量重打
 
 GitHub Actions 也支持手动触发：可临时调整扫描天数、每个关键词页数，或启用 `all_keywords`
 做全种子词扫描，用于补查延迟入库、延迟索引或新扩展关键词后的历史遗漏。
+即使某次扫描没有发现新增政策，也会更新 `site/data/meta.json` 中的 `checked_at`，
+用于页面展示最近检查时间，便于确认自动更新链路仍在运行。
 
 ## 部署到 GitHub Pages（已上线）
 

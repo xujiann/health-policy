@@ -417,12 +417,30 @@ function applyFilters() {
   renderList();
 }
 
+function latestPolicyDate() {
+  return state.policies
+    .map((p) => p.d)
+    .filter(Boolean)
+    .sort()
+    .pop() || "-";
+}
+
+function shortDateTime(value) {
+  if (!value) return "-";
+  return String(value).replace("T", " ").slice(0, 16);
+}
+
+function lastCheckedAt(meta = state.meta) {
+  return shortDateTime(meta?.checked_at || meta?.built_at);
+}
+
 function initSummaryPanel() {
   const m = state.meta;
   $("#summary-panel").classList.remove("hidden");
   $("#stat-policy-total").textContent = m.policy_total || m.total;
   $("#stat-interpretation-total").textContent = m.interpretation_total || 0;
-  $("#stat-latest-year").textContent = m.year_range?.[1] || "-";
+  $("#stat-latest-date").textContent = latestPolicyDate();
+  $("#stat-checked-at").textContent = lastCheckedAt(m);
   renderQualityPanel();
 }
 
@@ -860,13 +878,14 @@ function initAbout() {
   const footMeta = $("#foot-meta");
   if (aboutStats) {
       aboutStats.textContent =
-    `收录政策 ${m.total} 篇，年份覆盖 ${m.year_range[0]}–${m.year_range[1]}，数据构建于 ${m.built_at}。`;
+    `收录政策 ${m.total} 篇，年份覆盖 ${m.year_range[0]}–${m.year_range[1]}，最新政策日期 ${latestPolicyDate()}，最近检查于 ${lastCheckedAt(m)}。`;
   }
   if (footMeta) {
     footMeta.innerHTML = [
       `<span>卫生健康政策库 · 政策文件 ${esc(String(m.policy_total || m.total))} 篇 · 关联解读 ${esc(String(m.interpretation_total || 0))} 篇</span>`,
       `<span>数据来源：中国政府网政策文件库</span>`,
-      `<span>更新时间：${esc(m.built_at || "")}</span>`,
+      `<span>最新政策日期：${esc(latestPolicyDate())}</span>`,
+      `<span>最近检查：${esc(lastCheckedAt(m))}</span>`,
     ].join("");
   }
 }

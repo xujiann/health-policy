@@ -184,9 +184,11 @@ def rebuild_meta_and_trends(policies, previous_meta):
             "series": series,
             "total": sum(series),
         }
+    built_at = dt.datetime.now().isoformat(timespec="seconds")
     meta = {
         **previous_meta,
-        "built_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "built_at": built_at,
+        "checked_at": built_at,
         "total": len(policies),
         "year_range": [min(years), max(years)] if years else [],
         "cat_label": CAT_LABEL,
@@ -223,6 +225,13 @@ def main():
             dump_json("policies.json", policies)
             dump_json("meta.json", meta)
             dump_json("trends.json", trends)
+    else:
+        meta = {
+            **previous_meta,
+            "checked_at": dt.datetime.now().isoformat(timespec="seconds"),
+        }
+        if not args.dry_run:
+            dump_json("meta.json", meta)
     print(json.dumps({
         "new": len(new_items),
         "total": len(by_id),
@@ -230,6 +239,7 @@ def main():
         "pages": args.pages,
         "all_keywords": args.all_keywords,
         "dry_run": args.dry_run,
+        "checked_at": meta.get("checked_at"),
     }, ensure_ascii=False))
 
 
