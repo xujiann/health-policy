@@ -66,6 +66,14 @@ main{min-height:60vh;padding-top:18px}
 .toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
   font-size:14px;background:var(--card)}
 .toolbar input#q{flex:1;min-width:240px}
+.filter-details{flex:1 1 100%;min-width:0}
+.filter-details summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--brand-d);
+  background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:700}
+.filter-details summary::-webkit-details-marker{display:none}
+.filter-details summary::after{content:"›";font-size:16px;line-height:1;transition:transform .18s ease}
+.filter-details[open] summary::after{transform:rotate(90deg)}
+.filter-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:9px}
+.filter-grid select{width:100%;min-width:0}
 .quality-details{margin:-4px 0 12px}
 .quality-details summary{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--brand-d);
   background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:700}
@@ -260,7 +268,7 @@ main{min-height:60vh;padding-top:18px}
   .about-profile-card{padding:14px;border-radius:14px}
   .about-info-grid article{padding:14px;border-radius:12px}
 
-  /* 筛选：搜索框整行，下拉两列自适应，排序单独整行 */
+  /* 筛选：首屏保留高频条件，低频条件收进更多筛选 */
   .toolbar{gap:8px}
   .summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .summary-panel article{padding:10px 11px}
@@ -268,8 +276,11 @@ main{min-height:60vh;padding-top:18px}
   .quality-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .quality-panel article{padding:8px 9px}
   .toolbar input#q{flex:1 1 100%;min-width:0}
-  .toolbar select{flex:1 1 calc(50% - 4px);min-width:0;font-size:13px;padding:9px 8px}
-  .toolbar #f-sort{flex-basis:100%}
+  .toolbar>select{flex:1 1 calc(50% - 4px);min-width:0;font-size:13px;padding:9px 8px}
+  .toolbar #f-sort{flex:1 1 100%}
+  .filter-details summary{width:100%;justify-content:space-between;background:#fff}
+  .filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .filter-grid select{font-size:13px;padding:9px 8px}
 
   .item{padding:12px 13px}
   .item h3{font-size:15px}
