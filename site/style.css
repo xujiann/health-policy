@@ -61,6 +61,21 @@ main{min-height:60vh;padding-top:18px}
 .summary-panel article{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .summary-panel span{display:block;color:var(--muted);font-size:12px}
 .summary-panel strong{display:block;color:var(--brand-d);font-size:22px;line-height:1.2;margin-top:3px}
+.latest-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:-2px 0 14px}
+.latest-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:10px}
+.latest-head span{display:block;color:var(--brand);font-size:12px;font-weight:800}
+.latest-head h2{margin:2px 0 0;color:var(--brand-d);font-size:18px}
+.latest-head p{margin:0;color:var(--muted);font-size:12px;text-align:right}
+.latest-list{display:grid;gap:8px}
+.latest-list article{display:grid;grid-template-columns:92px minmax(0,1fr);gap:3px 10px;align-items:start;
+  padding:9px 0;border-top:1px solid var(--line)}
+.latest-list article:first-child{border-top:none}
+.latest-list time{color:#0f766e;font-size:12px;font-weight:800;line-height:1.6}
+.latest-list a{color:#0f172a;font-size:14px;font-weight:700;line-height:1.45}
+.latest-list a:hover{color:var(--brand)}
+.latest-list article div{grid-column:2;display:flex;flex-wrap:wrap;gap:5px}
+.latest-list article span{display:inline-flex;max-width:100%;background:#f8fafc;border:1px solid var(--line);
+  border-radius:20px;padding:1px 7px;color:#64748b;font-size:11px;line-height:1.5}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:rgba(255,255,255,.72);
   border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
 .toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
@@ -284,6 +299,11 @@ main{min-height:60vh;padding-top:18px}
   .summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .summary-panel article{padding:10px 11px}
   .summary-panel strong{font-size:20px}
+  .latest-panel{padding:13px;margin:-2px 0 12px;border-radius:10px}
+  .latest-head{display:grid;gap:3px;margin-bottom:6px}
+  .latest-head p{text-align:left}
+  .latest-list article{grid-template-columns:1fr;gap:4px;padding:10px 0}
+  .latest-list article div{grid-column:1}
   .quality-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .quality-panel article{padding:8px 9px}
   .toolbar input#q{flex:1 1 100%;min-width:0}

@@ -50,7 +50,7 @@ async function boot() {
 
 /* ---------- Corpus policy-only cleanup ---------- */
 const INTERPRETATION_RE = /(政策解读|《.+》解读|解读《|答记者问|吹风会|新闻发布会|图解|一图读懂|划重点|专家解读|负责人就|有关情况|最新回应|问答|访谈|透视)/;
-const NON_POLICY_RE = /(客户端下载页|政府信息公开指南|政府信息公开制度|机构职能|内设机构|主要职责|政务公开|首页|列表页|新闻发布会$|吹风会$|每日问答|两会精神看落实|新华社记者|记者问|最新回应|划重点|一图读懂|图解)/;
+const NON_POLICY_RE = /(客户端下载页|政府信息公开指南|政府信息公开制度|机构职能|内设机构|主要职责|政务公开|首页|列表页|新闻发布会$|吹风会$|每日问答|两会精神看落实|新华社记者|记者问|最新回应|划重点|一图读懂|图解|发布.+要做这些事|一文了解|带你了解|读懂)/;
 const POLICY_SIGNAL_RE = /(通知|意见|办法|规划|方案|标准|指南|目录|细则|决定|批复|公告|令|公报|工作要点|行动计划|实施方案|暂行规定|管理规范|监测指标体系|评判标准|设置标准|国办发|国发|国卫|医保|国中医药|国疾控|药监|财社|人社部发|民发|教体艺|〔\d{4}〕\d+号)/;
 
 function docNoFromText(text) {
@@ -441,7 +441,43 @@ function initSummaryPanel() {
   $("#stat-interpretation-total").textContent = m.interpretation_total || 0;
   $("#stat-latest-date").textContent = latestPolicyDate();
   $("#stat-checked-at").textContent = lastCheckedAt(m);
+  renderLatestPanel();
   renderQualityPanel();
+}
+
+function renderLatestPanel() {
+  const panel = $("#latest-panel");
+  if (!panel) return;
+  const latest = [...state.policies]
+    .filter((p) => p.d)
+    .sort((a, b) => b.d.localeCompare(a.d))
+    .slice(0, 5);
+  if (!latest.length) return;
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <div class="latest-head">
+      <div>
+        <span>自动更新速览</span>
+        <h2>最新政策文件</h2>
+      </div>
+      <p>按发文日期展示，来源于已过滤后的政策文件清单。</p>
+    </div>
+    <div class="latest-list">
+      ${latest.map((p) => {
+        const docNo = p.pcv || p.pc || "";
+        const issuer = p.ogv || p.og || "";
+        const route = p.tx ? [p.tx.ministryName, p.tx.bureauName, p.tx.office].filter(Boolean).join(" / ") : "";
+        return `<article>
+          <time>${esc(p.d || "")}</time>
+          <a href="${esc(p.u)}" target="_blank" rel="noopener">${esc(displayTitle(p, docNo, issuer))}</a>
+          <div>
+            ${docNo ? `<span>${esc(docNo)}</span>` : ""}
+            ${issuer ? `<span>${esc(issuer)}</span>` : ""}
+            ${route ? `<span>${esc(route)}</span>` : ""}
+          </div>
+        </article>`;
+      }).join("")}
+    </div>`;
 }
 
 function matchesDocState(p, stateName) {
