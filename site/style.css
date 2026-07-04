@@ -76,6 +76,11 @@ main{min-height:60vh;padding-top:18px}
 .latest-list article div{grid-column:2;display:flex;flex-wrap:wrap;gap:5px}
 .latest-list article span{display:inline-flex;max-width:100%;background:#f8fafc;border:1px solid var(--line);
   border-radius:20px;padding:1px 7px;color:#64748b;font-size:11px;line-height:1.5}
+.latest-actions{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.latest-actions button{border:1px solid #ccefe3;background:#ecfdf5;color:#065f46;border-radius:20px;
+  padding:3px 9px;font-size:12px;font-weight:800;cursor:pointer}
+.latest-actions button:hover{background:#d1fae5;border-color:#99f6e4}
+.latest-actions button:active{transform:translateY(1px)}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;background:rgba(255,255,255,.72);
   border:1px solid var(--line);border-radius:12px;padding:12px;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
 .toolbar input,.toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:8px;
@@ -304,6 +309,8 @@ main{min-height:60vh;padding-top:18px}
   .latest-head p{text-align:left}
   .latest-list article{grid-template-columns:1fr;gap:4px;padding:10px 0}
   .latest-list article div{grid-column:1}
+  .latest-actions{grid-column:1}
+  .latest-actions button{padding:6px 10px}
   .quality-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .quality-panel article{padding:8px 9px}
   .toolbar input#q{flex:1 1 100%;min-width:0}

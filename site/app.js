@@ -257,6 +257,11 @@ function initBrowse() {
   $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(applyFilters, 200); });
   ["#f-year", "#f-theme", "#f-office", "#f-route", "#f-doc-state", "#f-sort"].forEach((s) =>
     $(s).addEventListener("change", applyFilters));
+  $("#latest-panel")?.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-quick]");
+    if (!button) return;
+    applyQuickFilter(button.dataset);
+  });
   $("#active-filters")?.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-clear]");
     if (!button) return;
@@ -274,6 +279,27 @@ function initBrowse() {
     renderOfficeOptions();
     applyFilters();
   });
+}
+
+function resetBrowseControls() {
+  ["#q", "#f-year", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"].forEach((selector) => {
+    $(selector).value = "";
+  });
+  $("#f-sort").value = "date_desc";
+}
+
+function applyQuickFilter(data) {
+  resetBrowseControls();
+  if (data.year) $("#f-year").value = data.year;
+  if (data.theme) $("#f-theme").value = data.theme;
+  if (data.ministry) $("#f-ministry").value = data.ministry;
+  renderBureauOptions();
+  if (data.bureau) $("#f-bureau").value = data.bureau;
+  renderOfficeOptions();
+  if (data.office) $("#f-office").value = data.office;
+  applyFilters();
+  $("#filter-details").open = Boolean(data.ministry || data.bureau || data.office);
+  document.querySelector("#view-browse")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function selectedText(selector) {
@@ -467,6 +493,15 @@ function renderLatestPanel() {
         const docNo = p.pcv || p.pc || "";
         const issuer = p.ogv || p.og || "";
         const route = p.tx ? [p.tx.ministryName, p.tx.bureauName, p.tx.office].filter(Boolean).join(" / ") : "";
+        const theme = (p.th || [])[0] || "";
+        const ministry = (p.tx?.ministryIds || [])[0] || "";
+        const bureau = p.tx?.bureauId || "";
+        const deptLabel = p.tx?.bureauName || p.tx?.ministryName || "";
+        const actions = [
+          `<button type="button" data-quick="year" data-year="${esc(String(p.y || ""))}">看${esc(String(p.y || ""))}年</button>`,
+          theme ? `<button type="button" data-quick="theme" data-theme="${esc(theme)}">同主题</button>` : "",
+          ministry ? `<button type="button" data-quick="dept" data-ministry="${esc(ministry)}" data-bureau="${esc(bureau)}">${esc(deptLabel ? `同${deptLabel}` : "同部门")}</button>` : "",
+        ].filter(Boolean).join("");
         return `<article>
           <time>${esc(p.d || "")}</time>
           <a href="${esc(p.u)}" target="_blank" rel="noopener">${esc(displayTitle(p, docNo, issuer))}</a>
@@ -475,6 +510,7 @@ function renderLatestPanel() {
             ${issuer ? `<span>${esc(issuer)}</span>` : ""}
             ${route ? `<span>${esc(route)}</span>` : ""}
           </div>
+          <nav class="latest-actions">${actions}</nav>
         </article>`;
       }).join("")}
     </div>`;
