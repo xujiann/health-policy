@@ -601,7 +601,52 @@ function displayTitle(p, docNo, issuer) {
   return title || p.t || "";
 }
 
-function itemHTML(p, q) {
+function relationReasons(policy, candidate) {
+  const reasons = [];
+  if (policy.tx?.bureauId && policy.tx?.bureauId === candidate.tx?.bureauId) {
+    reasons.push(policy.tx?.office && policy.tx.office === candidate.tx?.office ? "同处室" : "同司局");
+  } else if ((policy.tx?.ministryIds || []).some((id) => (candidate.tx?.ministryIds || []).includes(id))) {
+    reasons.push("同部委");
+  }
+  const sharedThemes = (policy.th || []).filter((theme) => (candidate.th || []).includes(theme));
+  sharedThemes.slice(0, 2).forEach((theme) => reasons.push(theme));
+  return reasons;
+}
+
+function relatedPolicies(policy, limit = 3) {
+  return state.policies
+    .filter((candidate) => candidate.id !== policy.id)
+    .map((candidate) => {
+      const reasons = relationReasons(policy, candidate);
+      if (!reasons.length) return null;
+      let score = reasons.reduce((sum, reason) => {
+        if (reason === "同处室") return sum + 8;
+        if (reason === "同司局") return sum + 5;
+        if (reason === "同部委") return sum + 2;
+        return sum + 3;
+      }, 0);
+      if (candidate.d && policy.d && candidate.d <= policy.d) score += 1;
+      return { policy: candidate, reasons: reasons.slice(0, 3), score };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score || (b.policy.d || "").localeCompare(a.policy.d || ""))
+    .slice(0, limit);
+}
+
+function relatedHTML(policy) {
+  const related = relatedPolicies(policy, 3);
+  if (!related.length) return "";
+  return `<div class="related-row"><span>相关文件</span>${related.map(({ policy: item, reasons }) => {
+    const docNo = item.pcv || item.pc || "";
+    const issuer = item.ogv || item.og || "";
+    return `<a href="${esc(item.u)}" target="_blank" rel="noopener">
+      <strong>${esc(displayTitle(item, docNo, issuer))}</strong>
+      <em>${esc(reasons.join(" / "))}</em>
+    </a>`;
+  }).join("")}</div>`;
+}
+
+function itemHTML(p, q, options = {}) {
   const docNo = p.pcv || p.pc || "";
   const issuer = p.ogv || p.og || "";
   const title = displayTitle(p, docNo, issuer);
@@ -625,6 +670,7 @@ function itemHTML(p, q) {
     ${themes ? `<div class="th-row">${themes}</div>` : ""}
     ${summary ? `<p class="summary">${highlight(summary, q)}</p>` : ""}
     ${interps ? `<div class="interp-row"><span>政策解读</span>${interps}</div>` : ""}
+    ${options.related ? relatedHTML(p) : ""}
   </li>`;
 }
 
@@ -664,7 +710,7 @@ function renderList() {
   const slice = state.filtered.slice(start, start + PAGE);
   renderActiveFilters(qText);
   $("#result-info").textContent = `共 ${total} 篇` + (hasActiveBrowseFilter(q) ? "（已筛选）" : "");
-  $("#list").innerHTML = slice.map((p) => itemHTML(p, q)).join("") ||
+  $("#list").innerHTML = slice.map((p) => itemHTML(p, q, { related: true })).join("") ||
     `<li class="item muted">没有匹配的政策，换个关键词试试。</li>`;
   renderPager(pages);
   window.scrollTo({ top: 0, behavior: "smooth" });

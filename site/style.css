@@ -146,6 +146,13 @@ main{min-height:60vh;padding-top:18px}
 .interp-row a{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;border:1px solid #dbeafe;background:#f8fbff;border-radius:8px;color:#1d4ed8;font-size:13px}
 .interp-row a strong{font-weight:500;color:#1e3a8a}
 .interp-row a span{color:var(--muted);white-space:nowrap}
+.related-row{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);display:grid;gap:6px}
+.related-row>span{font-size:12px;font-weight:800;color:#0f766e}
+.related-row a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;
+  padding:7px 9px;border:1px solid #ccefe3;background:#fbfffd;border-radius:8px;color:#0f172a;font-size:13px}
+.related-row a strong{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.related-row a em{font-style:normal;color:#0f766e;background:#ecfdf5;border:1px solid #ccefe3;border-radius:20px;
+  padding:1px 7px;font-size:11px;white-space:nowrap}
 
 .pager{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:20px 0}
 .pager button{padding:6px 12px;border:1px solid var(--line);background:var(--card);
@@ -328,6 +335,9 @@ main{min-height:60vh;padding-top:18px}
   .item .summary{font-size:13px}
   .interp-row a{display:grid;gap:2px}
   .interp-row a span{white-space:normal}
+  .related-row a{grid-template-columns:1fr;gap:3px}
+  .related-row a strong{white-space:normal}
+  .related-row a em{justify-self:start}
 
   /* 图表：略高以容纳多主题图例，左右内边距收紧 */
   .chart-box{height:460px;padding:12px 6px}
