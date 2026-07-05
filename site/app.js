@@ -636,14 +636,14 @@ function relatedPolicies(policy, limit = 3) {
 function relatedHTML(policy) {
   const related = relatedPolicies(policy, 3);
   if (!related.length) return "";
-  return `<div class="related-row"><span>相关文件</span>${related.map(({ policy: item, reasons }) => {
+  return `<details class="related-row"><summary>相关文件 <span>${related.length}</span></summary>${related.map(({ policy: item, reasons }) => {
     const docNo = item.pcv || item.pc || "";
     const issuer = item.ogv || item.og || "";
     return `<a href="${esc(item.u)}" target="_blank" rel="noopener">
       <strong>${esc(displayTitle(item, docNo, issuer))}</strong>
       <em>${esc(reasons.join(" / "))}</em>
     </a>`;
-  }).join("")}</div>`;
+  }).join("")}</details>`;
 }
 
 function itemHTML(p, q, options = {}) {
