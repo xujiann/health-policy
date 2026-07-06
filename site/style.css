@@ -12,6 +12,11 @@ a:hover{text-decoration:underline}
 
 .portal-body{background:#f4f8f7}
 .portal{max-width:760px;min-height:100svh;margin:0 auto;padding:20px 16px max(34px,env(safe-area-inset-bottom))}
+.portal-nav{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
+.portal-nav a{min-height:36px;display:inline-flex;align-items:center;border:1px solid var(--line);
+  border-radius:10px;background:#fff;color:#0f3f38;padding:0 12px;text-decoration:none;font-size:13px;font-weight:800;
+  box-shadow:0 8px 20px rgba(15,23,42,.04)}
+.portal-nav a:hover{text-decoration:none;border-color:#14b8a6;background:#f0fdfa}
 .portal-hero{padding:22px 2px 16px}
 .portal-mark{width:54px;height:54px;border-radius:14px;border:1px solid var(--line);background:#fff;padding:6px;
   box-shadow:0 10px 24px rgba(15,23,42,.08)}
