@@ -100,6 +100,12 @@
       <div id="kw-suggest" class="kw-suggest"></div>
       <div id="kw-chips" class="kw-chips"></div>
     </div>
+    <div class="rel-mode view-mode">
+      <span class="rel-label">视图：</span>
+      <label><input type="radio" name="viewmode" value="count" checked> 数量</label>
+      <label><input type="radio" name="viewmode" value="share"> 占比（构成）</label>
+      <span class="muted rel-hint">占比＝当年各主题标签占该年全部主题标签的百分比（堆叠和≈100%），看政策重心的结构性变化。</span>
+    </div>
     <div class="chart-box"><canvas id="chart"></canvas></div>
     <div id="forecast-box" class="forecast-box"></div>
     <div class="theme-detail">
@@ -119,6 +125,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=3"></script>
-<script src="app.js?v=28"></script>
+<script src="app.js?v=29"></script>
 </body>
 </html>

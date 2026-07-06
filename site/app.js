@@ -735,7 +735,9 @@ function renderPager(pages) {
 
 /* ---------- Trend ---------- */
 const PALETTE = ["#0b6e5f", "#1d6fb8", "#c2410c", "#7c3aed", "#be123c", "#0891b2",
-  "#65a30d", "#b45309", "#db2777", "#4f46e5", "#0d9488", "#9333ea"];
+  "#65a30d", "#b45309", "#db2777", "#4f46e5", "#0d9488", "#9333ea",
+  "#0e7490", "#a21caf", "#ca8a04", "#dc2626", "#2563eb", "#16a34a",
+  "#7c2d12", "#5b21b6"];
 
 const CUSTOM_PALETTE = ["#111827", "#b91c1c", "#1e40af", "#6d28d9", "#a16207",
   "#0f766e", "#9d174d", "#3f6212"];
@@ -780,6 +782,7 @@ const FORECAST_RULES = [
 state.customLines = []; // {label, words, color}
 state.showPresets = true;
 state.relMode = "all"; // 'all' = 标题+摘要；'strong' = 仅标题强相关
+state.viewMode = "count"; // 'count' 数量折线 | 'share' 占比堆叠
 
 function initTrend() {
   const pick = $("#theme-pick");
@@ -805,6 +808,13 @@ function initTrend() {
       refreshChart();
       renderChips();
       renderThemeList($("#theme-pick").value);
+    }));
+  // 视图切换：数量 / 占比
+  document.querySelectorAll('input[name="viewmode"]').forEach((r) =>
+    r.addEventListener("change", (e) => {
+      if (!e.target.checked) return;
+      state.viewMode = e.target.value;
+      rebuildChart();
     }));
 }
 
@@ -889,6 +899,7 @@ function renderChips() {
 }
 
 function buildDatasets() {
+  if (state.viewMode === "share") return buildShareDatasets();
   const tr = state.trends;
   const presets = state.showPresets ? Object.entries(tr.themes).map(([name, d], i) => ({
     label: name,
@@ -908,9 +919,27 @@ function buildDatasets() {
   return presets.concat(customs);
 }
 
+// 占比视图：每年各主题标签占该年全部主题标签的百分比，堆叠面积（各年和≈100%），
+// 看政策重心的结构性转移，而非绝对数量。不含自定义关键词曲线。
+function buildShareDatasets() {
+  const tr = state.trends;
+  const totals = tr.years.map((_, i) =>
+    Object.values(tr.themes).reduce((s, d) => s + d.series[i], 0));
+  return Object.entries(tr.themes).map(([name, d], i) => ({
+    label: name,
+    data: d.series.map((v, j) => (totals[j] ? +(v / totals[j] * 100).toFixed(1) : 0)),
+    borderColor: PALETTE[i % PALETTE.length],
+    backgroundColor: PALETTE[i % PALETTE.length] + "66",
+    fill: true, tension: 0.3, borderWidth: 1, pointRadius: 0,
+  }));
+}
+
 function smallScreen() { return window.innerWidth <= 640; }
 
 function chartTitle() {
+  if (state.viewMode === "share") {
+    return smallScreen() ? "主题构成占比" : "卫生健康主题政策构成占比逐年变化（AI 标签）";
+  }
   return smallScreen()
     ? "主题政策逐年变化（AI 标签）"
     : "卫生健康主题政策数量逐年变化（AI 主题标签）";
@@ -930,7 +959,15 @@ function drawChart() {
           font: { size: smallScreen() ? 11 : 12 } } },
         title: { display: true, text: chartTitle() },
       },
-      scales: { y: { beginAtZero: true, title: { display: true, text: "政策数（篇）" } } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          stacked: state.viewMode === "share",
+          max: state.viewMode === "share" ? 100 : undefined,
+          title: { display: true, text: state.viewMode === "share" ? "主题构成占比（%）" : "政策数（篇）" },
+        },
+        x: { stacked: state.viewMode === "share" },
+      },
     },
   });
 }
@@ -940,6 +977,13 @@ function refreshChart() {
   state.chart.data.datasets = buildDatasets();
   state.chart.options.plugins.title.text = chartTitle();
   state.chart.update();
+  renderForecast();
+}
+
+// 视图切换（数量↔占比）要改 scales(stacked)，用重建最稳
+function rebuildChart() {
+  if (state.chart) { state.chart.destroy(); state.chart = null; }
+  drawChart();
   renderForecast();
 }
 
