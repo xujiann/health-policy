@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xujiann.github.io/health-policy/policy.html">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=33">
+<link rel="stylesheet" href="style.css?v=34">
 </head>
 <body>
 <header class="top">
@@ -53,6 +53,21 @@
   <section id="view-browse" class="view">
     <div class="toolbar">
       <input id="q" type="search" placeholder="搜索标题 / 文号 / 摘要，如：分级诊疗、国办发〔2024〕…">
+      <div class="dept-filter-row" aria-label="按国家部委、司局、处室筛选">
+        <label>
+          <span>国家部委</span>
+          <select id="f-ministry"><option value="">全部部委</option></select>
+        </label>
+        <label>
+          <span>司局</span>
+          <select id="f-bureau"><option value="">全部司局</option></select>
+        </label>
+        <label>
+          <span>处室</span>
+          <select id="f-office"><option value="">全部处室</option></select>
+        </label>
+      </div>
+      <div id="dept-filter-hint" class="dept-filter-hint"></div>
       <select id="f-year"><option value="">全部年份</option></select>
       <select id="f-theme"><option value="">全部主题</option></select>
       <select id="f-sort">
@@ -62,9 +77,6 @@
       <details id="filter-details" class="filter-details">
         <summary>更多筛选 <span id="advanced-filter-count" class="filter-count hidden"></span></summary>
         <div class="filter-grid">
-          <select id="f-ministry"><option value="">全部部委</option></select>
-          <select id="f-bureau"><option value="">全部司局</option></select>
-          <select id="f-office"><option value="">全部处室</option></select>
           <select id="f-route"><option value="">全部归口依据</option></select>
           <select id="f-doc-state"><option value="">全部文号/机关状态</option></select>
         </div>
@@ -125,6 +137,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=3"></script>
-<script src="app.js?v=29"></script>
+<script src="app.js?v=30"></script>
 </body>
 </html>

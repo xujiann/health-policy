@@ -267,6 +267,11 @@ function initBrowse() {
     if (!button) return;
     clearBrowseFilter(button.dataset.clear);
   });
+  $("#list")?.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-quick]");
+    if (!button) return;
+    applyQuickFilter(button.dataset);
+  });
   $("#f-ministry").addEventListener("change", () => {
     $("#f-bureau").value = "";
     $("#f-office").value = "";
@@ -327,6 +332,18 @@ function activeFilterItems(q) {
   return items;
 }
 
+function updateDepartmentHint(total = state.filtered.length) {
+  const box = $("#dept-filter-hint");
+  if (!box) return;
+  const parts = [
+    selectedText("#f-ministry"),
+    selectedText("#f-bureau"),
+    selectedText("#f-office"),
+  ].filter(Boolean);
+  const label = parts.length ? parts.join(" / ") : "全部部门归口";
+  box.innerHTML = `<span>${esc(label)}</span><strong>${esc(String(total))}</strong> 篇政策文件`;
+}
+
 function clearBrowseFilter(key) {
   if (key === "all") {
     ["#q", "#f-year", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"].forEach((selector) => {
@@ -378,6 +395,7 @@ function renderMinistryOptions() {
     .map((item) => `<option value="${esc(item.id)}">${esc(item.name)}（${counts.get(item.id)}）</option>`)
     .join("");
   sel.value = [...sel.options].some((option) => option.value === current) ? current : "";
+  updateDepartmentHint();
 }
 
 function renderBureauOptions() {
@@ -392,6 +410,7 @@ function renderBureauOptions() {
     .map((item) => `<option value="${esc(item.id)}">${esc(item.name)}（${counts.get(item.id)}）</option>`)
     .join("");
   sel.value = [...sel.options].some((option) => option.value === current) ? current : "";
+  updateDepartmentHint();
 }
 
 function renderOfficeOptions() {
@@ -413,6 +432,7 @@ function renderOfficeOptions() {
     .map((name) => `<option value="${esc(name)}">${esc(name)}（${counts.get(name)}）</option>`)
     .join("");
   sel.value = [...sel.options].some((option) => option.value === current) ? current : "";
+  updateDepartmentHint();
 }
 
 function applyFilters() {
@@ -651,9 +671,15 @@ function itemHTML(p, q, options = {}) {
   const issuer = p.ogv || p.og || "";
   const title = displayTitle(p, docNo, issuer);
   const themes = (p.th || []).map((t) => `<span class="th-chip">${esc(t)}</span>`).join("");
-  const route = p.tx ? [p.tx.ministryName, p.tx.bureauName, p.tx.office].filter(Boolean).join(" / ") : "";
+  const primaryMinistry = (p.tx?.ministryIds || [p.tx?.ministryId || ""])[0] || "";
   const taxonomy = p.tx
-    ? `<div class="policy-route"><span>归口</span><strong>${esc(route)}</strong><em>${esc(p.tx.assignment)}</em></div>`
+    ? `<div class="policy-route" aria-label="归口筛选">
+        <span>归口</span>
+        ${primaryMinistry ? `<button type="button" data-quick="ministry" data-ministry="${esc(primaryMinistry)}">${esc(p.tx.ministryName)}</button>` : ""}
+        ${p.tx.bureauId ? `<button type="button" data-quick="bureau" data-ministry="${esc(primaryMinistry)}" data-bureau="${esc(p.tx.bureauId)}">${esc(p.tx.bureauName)}</button>` : ""}
+        ${p.tx.office ? `<button type="button" data-quick="office" data-ministry="${esc(primaryMinistry)}" data-bureau="${esc(p.tx.bureauId || "")}" data-office="${esc(p.tx.office)}">${esc(p.tx.office)}</button>` : ""}
+        <em>${esc(p.tx.assignment)}</em>
+      </div>`
     : "";
   const interps = (p.interps || []).slice(0, 4).map((item) =>
     `<a href="${esc(item.u)}" target="_blank" rel="noopener"><strong>${esc(item.t)}</strong><span>${esc(item.d || "")}</span></a>`
@@ -682,7 +708,7 @@ function hasActiveBrowseFilter(q) {
 function renderActiveFilters(q) {
   const box = $("#active-filters");
   const items = activeFilterItems(q);
-  const advancedCount = items.filter(([key]) => ["ministry", "bureau", "office", "route", "doc-state"].includes(key)).length;
+  const advancedCount = items.filter(([key]) => ["route", "doc-state"].includes(key)).length;
   const advancedBadge = $("#advanced-filter-count");
   if (advancedBadge) {
     advancedBadge.textContent = advancedCount ? `${advancedCount}` : "";
@@ -709,6 +735,7 @@ function renderList() {
   const start = (state.page - 1) * PAGE;
   const slice = state.filtered.slice(start, start + PAGE);
   renderActiveFilters(qText);
+  updateDepartmentHint(total);
   $("#result-info").textContent = `共 ${total} 篇` + (hasActiveBrowseFilter(q) ? "（已筛选）" : "");
   $("#list").innerHTML = slice.map((p) => itemHTML(p, q, { related: true })).join("") ||
     `<li class="item muted">没有匹配的政策，换个关键词试试。</li>`;
