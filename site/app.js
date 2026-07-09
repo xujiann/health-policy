@@ -257,6 +257,14 @@ function initBrowse() {
   $("#q").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(applyFilters, 200); });
   ["#f-year", "#f-theme", "#f-office", "#f-route", "#f-doc-state", "#f-sort"].forEach((s) =>
     $(s).addEventListener("change", applyFilters));
+  $("#f-route-mode").addEventListener("change", () => {
+    $("#f-bureau").value = "";
+    $("#f-office").value = "";
+    renderMinistryOptions();
+    renderBureauOptions();
+    renderOfficeOptions();
+    applyFilters();
+  });
   $("#latest-panel")?.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-quick]");
     if (!button) return;
@@ -290,6 +298,7 @@ function resetBrowseControls() {
   ["#q", "#f-year", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"].forEach((selector) => {
     $(selector).value = "";
   });
+  $("#f-route-mode").value = "doc_strict";
   $("#f-sort").value = "date_desc";
 }
 
@@ -329,19 +338,22 @@ function activeFilterItems(q) {
     const value = selectedText(selector);
     if (value) items.push([key, label, value]);
   });
+  if (routeMode() === "all_routes") items.push(["route-mode", "口径", selectedText("#f-route-mode")]);
   return items;
 }
 
 function updateDepartmentHint(total = state.filtered.length) {
   const box = $("#dept-filter-hint");
   if (!box) return;
+  const mode = $("#f-route-mode")?.value || "doc_strict";
   const parts = [
     selectedText("#f-ministry"),
     selectedText("#f-bureau"),
     selectedText("#f-office"),
   ].filter(Boolean);
   const label = parts.length ? parts.join(" / ") : "全部部门归口";
-  box.innerHTML = `<span>${esc(label)}</span><strong>${esc(String(total))}</strong> 篇政策文件`;
+  const basis = mode === "doc_strict" ? "按发文字号前缀严格对应" : "含发文机关识别补充";
+  box.innerHTML = `<span>${esc(label)}</span><strong>${esc(String(total))}</strong> 篇政策文件 <em>${esc(basis)}</em>`;
 }
 
 function clearBrowseFilter(key) {
@@ -349,6 +361,7 @@ function clearBrowseFilter(key) {
     ["#q", "#f-year", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"].forEach((selector) => {
       $(selector).value = "";
     });
+    $("#f-route-mode").value = "doc_strict";
     $("#f-sort").value = "date_desc";
   } else if (key === "q") {
     $("#q").value = "";
@@ -356,6 +369,11 @@ function clearBrowseFilter(key) {
     $("#f-year").value = "";
   } else if (key === "theme") {
     $("#f-theme").value = "";
+  } else if (key === "route-mode") {
+    $("#f-route-mode").value = "doc_strict";
+    $("#f-ministry").value = "";
+    $("#f-bureau").value = "";
+    $("#f-office").value = "";
   } else if (key === "ministry") {
     $("#f-ministry").value = "";
     $("#f-bureau").value = "";
@@ -370,6 +388,7 @@ function clearBrowseFilter(key) {
   } else if (key === "doc-state") {
     $("#f-doc-state").value = "";
   }
+  renderMinistryOptions();
   renderBureauOptions();
   renderOfficeOptions();
   applyFilters();
@@ -385,11 +404,25 @@ function countBy(items, keyFn) {
   return counts;
 }
 
+function routeMode() {
+  return $("#f-route-mode")?.value || "doc_strict";
+}
+
+function matchesRouteMode(p, mode = routeMode()) {
+  if (mode === "doc_strict") return p.tx?.assignment === "文号归口";
+  return true;
+}
+
+function departmentCorpus() {
+  const mode = routeMode();
+  return state.policies.filter((p) => matchesRouteMode(p, mode));
+}
+
 function renderMinistryOptions() {
   const tx = window.POLICY_TAXONOMY;
   const sel = $("#f-ministry");
   const current = sel.value;
-  const counts = countBy(state.policies, (p) => p.tx?.ministryIds || []);
+  const counts = countBy(departmentCorpus(), (p) => p.tx?.ministryIds || []);
   sel.innerHTML = `<option value="">全部部委</option>` + tx.ministries
     .filter((item) => counts.get(item.id))
     .map((item) => `<option value="${esc(item.id)}">${esc(item.name)}（${counts.get(item.id)}）</option>`)
@@ -403,7 +436,7 @@ function renderBureauOptions() {
   const ministryId = $("#f-ministry").value;
   const sel = $("#f-bureau");
   const current = sel.value;
-  const pool = state.policies.filter((p) => !ministryId || (p.tx?.ministryIds || []).includes(ministryId));
+  const pool = departmentCorpus().filter((p) => !ministryId || (p.tx?.ministryIds || []).includes(ministryId));
   const counts = countBy(pool, (p) => p.tx?.bureauId);
   const candidates = tx.bureausFor(ministryId).filter((item) => counts.get(item.id));
   sel.innerHTML = `<option value="">全部司局</option>` + candidates
@@ -419,7 +452,7 @@ function renderOfficeOptions() {
   const bureauId = $("#f-bureau").value;
   const sel = $("#f-office");
   const current = sel.value;
-  const pool = state.policies.filter((p) => {
+  const pool = departmentCorpus().filter((p) => {
     if (ministryId && !(p.tx?.ministryIds || []).includes(ministryId)) return false;
     if (bureauId && p.tx?.bureauId !== bureauId) return false;
     return true;
@@ -441,8 +474,10 @@ function applyFilters() {
   const th = $("#f-theme").value;
   const ministry = $("#f-ministry").value, bureau = $("#f-bureau").value, office = $("#f-office").value;
   const route = $("#f-route").value, docState = $("#f-doc-state").value;
+  const mode = routeMode();
   const sort = $("#f-sort").value;
   let arr = state.policies.filter((p) => {
+    if (!matchesRouteMode(p, mode)) return false;
     if (y && String(p.y) !== y) return false;
     if (th && !(p.th || []).includes(th)) return false;
     if (ministry && !(p.tx?.ministryIds || []).includes(ministry)) return false;
@@ -569,7 +604,7 @@ function renderQualityPanel() {
 
 function taxonomyText(p) {
   if (!p.tx) return "";
-  return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment} ${p.tx.evidence || ""}`;
+  return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment} ${p.tx.docPrefix || ""} ${p.tx.evidence || ""}`;
 }
 
 function highlight(text, q) {
@@ -681,6 +716,14 @@ function itemHTML(p, q, options = {}) {
         <em>${esc(p.tx.assignment)}</em>
       </div>`
     : "";
+  const routeEvidence = p.tx
+    ? `<div class="route-evidence">
+        ${p.tx.docNo ? `<span>文号：${esc(p.tx.docNo)}</span>` : ""}
+        ${p.tx.docPrefix ? `<span>前缀：${esc(p.tx.docPrefix)}</span>` : ""}
+        ${p.tx.evidence ? `<span>${esc(p.tx.evidence)}</span>` : ""}
+        ${p.tx.confidence ? `<span>置信度：${esc(String(Math.round(Number(p.tx.confidence) * 100)))}%</span>` : ""}
+      </div>`
+    : "";
   const interps = (p.interps || []).slice(0, 4).map((item) =>
     `<a href="${esc(item.u)}" target="_blank" rel="noopener"><strong>${esc(item.t)}</strong><span>${esc(item.d || "")}</span></a>`
   ).join("");
@@ -693,6 +736,7 @@ function itemHTML(p, q, options = {}) {
       <div><dt>发文日期</dt><dd>${p.d ? esc(p.d) : "未标注"}</dd></div>
     </dl>
     ${taxonomy}
+    ${routeEvidence}
     ${themes ? `<div class="th-row">${themes}</div>` : ""}
     ${summary ? `<p class="summary">${highlight(summary, q)}</p>` : ""}
     ${interps ? `<div class="interp-row"><span>政策解读</span>${interps}</div>` : ""}
@@ -702,7 +746,7 @@ function itemHTML(p, q, options = {}) {
 
 function hasActiveBrowseFilter(q) {
   return q || ["#f-year", "#f-theme", "#f-ministry", "#f-bureau", "#f-office", "#f-route", "#f-doc-state"]
-    .some((s) => $(s).value);
+    .some((s) => $(s).value) || routeMode() !== "doc_strict";
 }
 
 function renderActiveFilters(q) {
@@ -736,7 +780,8 @@ function renderList() {
   const slice = state.filtered.slice(start, start + PAGE);
   renderActiveFilters(qText);
   updateDepartmentHint(total);
-  $("#result-info").textContent = `共 ${total} 篇` + (hasActiveBrowseFilter(q) ? "（已筛选）" : "");
+  const modeLabel = routeMode() === "doc_strict" ? "文号严格对应" : "含机关识别补充";
+  $("#result-info").textContent = `共 ${total} 篇 · ${modeLabel}` + (hasActiveBrowseFilter(q) ? "（已筛选）" : "");
   $("#list").innerHTML = slice.map((p) => itemHTML(p, q, { related: true })).join("") ||
     `<li class="item muted">没有匹配的政策，换个关键词试试。</li>`;
   renderPager(pages);
