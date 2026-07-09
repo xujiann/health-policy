@@ -607,7 +607,8 @@ function renderQualityPanel() {
 
 function taxonomyText(p) {
   if (!p.tx) return "";
-  return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment} ${p.tx.docPrefix || ""} ${p.tx.evidence || ""}`;
+  const officeSource = p.tx.officeSource === "official_unpublished" ? "官网未公开 处室未公开" : "官网处室";
+  return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment} ${p.tx.docPrefix || ""} ${officeSource} ${p.tx.evidence || ""}`;
 }
 
 function highlight(text, q) {
