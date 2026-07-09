@@ -340,7 +340,8 @@ main{min-height:60vh;padding-top:18px}
   .about-info-grid article{padding:14px;border-radius:12px}
 
   /* 筛选：首屏保留高频条件，低频条件收进更多筛选 */
-  .toolbar{gap:8px}
+  .toolbar{gap:8px;top:0;padding:10px;border-radius:0 0 14px 14px;margin-left:-12px;margin-right:-12px;
+    border-left:none;border-right:none}
   .summary-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .summary-panel article{padding:10px 11px}
   .summary-panel strong{font-size:20px}
@@ -353,8 +354,9 @@ main{min-height:60vh;padding-top:18px}
   .latest-actions button{padding:6px 10px}
   .quality-panel{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .quality-panel article{padding:8px 9px}
-  .toolbar input#q{flex:1 1 100%;min-width:0}
-  .dept-filter-row{grid-template-columns:1fr;padding:9px;gap:7px}
+  .toolbar input#q{flex:1 1 100%;min-width:0;font-size:14px;padding:10px 11px}
+  .dept-filter-row{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;gap:7px;width:100%}
+  .dept-filter-row .dept-filter-mode{grid-column:1/3}
   .dept-filter-row select{font-size:13px;padding:9px 8px}
   .dept-filter-hint{align-items:flex-start;flex-wrap:wrap;line-height:1.55}
   .toolbar>select{flex:1 1 calc(50% - 4px);min-width:0;font-size:13px;padding:9px 8px}
@@ -401,4 +403,11 @@ main{min-height:60vh;padding-top:18px}
 
   .about{padding:6px 16px 20px}
   .about h3{font-size:15px}
+}
+
+@media(max-width:420px){
+  .dept-filter-row{grid-template-columns:1fr}
+  .dept-filter-row .dept-filter-mode{grid-column:auto}
+  .toolbar>select{flex:1 1 100%}
+  .filter-grid{grid-template-columns:1fr}
 }

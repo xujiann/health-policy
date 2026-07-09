@@ -18,44 +18,71 @@
     { id: "other", name: "其他协同部门", aliases: [] }
   ];
 
+  const UNPUBLISHED_OFFICE = "处室未公开";
+  const unpublished = [UNPUBLISHED_OFFICE];
+
   const bureaus = [
-    { id: "state_health_reform", ministry: "state", name: "医改与健康中国综合政策", offices: ["综合政策", "医改协调", "规划部署"] },
-    { id: "nhc_office", ministry: "nhc", name: "办公厅", offices: ["秘书处", "综合处", "督查室", "政务公开处"] },
-    { id: "nhc_hr", ministry: "nhc", name: "人事司", offices: ["综合处", "干部处", "专业人才管理处", "劳动工资处"] },
+    { id: "state_health_reform", ministry: "state", name: "国务院及办公厅", offices: unpublished },
+    { id: "nhc_office", ministry: "nhc", name: "办公厅", offices: ["秘书处（总值班室）", "综合处", "研究室", "督查室", "文档处", "政务信息处", "联络处", "信访处", "保密安全处"] },
+    { id: "nhc_hr", ministry: "nhc", name: "人事司", offices: ["综合处", "干部处", "监督教育处", "专业人才管理处", "劳动工资处"] },
     { id: "nhc_planning", ministry: "nhc", name: "规划发展与信息化司", offices: ["综合处", "发展规划处", "建设装备处", "信息统计处", "爱国卫生工作办公室"] },
-    { id: "nhc_finance", ministry: "nhc", name: "财务司", offices: ["办公室", "预算管理处", "资产管理处", "审计评价处", "乡村振兴处"] },
-    { id: "nhc_legal", ministry: "nhc", name: "法规司", offices: ["综合处", "立法处", "法制审核处", "标准处"] },
+    { id: "nhc_finance", ministry: "nhc", name: "财务司", offices: ["办公室", "经济管理处", "预算管理处", "资产管理处", "审计评价处", "乡村振兴处", "机关财务处"] },
+    { id: "nhc_legal", ministry: "nhc", name: "法规司", offices: ["综合处（行政复议处）", "立法处", "法制审核处", "标准处"] },
     { id: "nhc_reform", ministry: "nhc", name: "体制改革司", offices: ["综合协调处", "政策研究处", "督导评价处", "公立医院改革处"] },
     { id: "nhc_medical", ministry: "nhc", name: "医政司", offices: ["综合处", "医疗资源处", "医疗机构处", "医疗管理处", "心理健康与精神卫生处", "护理与康复处"] },
     { id: "nhc_primary", ministry: "nhc", name: "基层卫生健康司", offices: ["综合处", "运行评价处", "家庭医生处", "基本公共卫生处"] },
     { id: "nhc_emergency", ministry: "nhc", name: "医疗应急司", offices: ["综合处", "医疗应急管理处", "医疗应急指导处", "公共卫生医疗管理处", "血液管理处", "医疗监督和行风管理处", "安全生产处"] },
-    { id: "nhc_science", ministry: "nhc", name: "科技教育司", offices: ["综合处", "项目管理处", "规划评估处", "生物安全处", "医学教育处"] },
-    { id: "nhc_drug", ministry: "nhc", name: "药物政策司", offices: ["综合处", "药物政策处", "药品目录管理处", "药品供应保障协调处"] },
-    { id: "nhc_food", ministry: "nhc", name: "食品安全标准司", offices: ["综合处", "食品安全标准管理处", "食品安全风险监测与评估处", "食品营养处"] },
+    { id: "nhc_science", ministry: "nhc", name: "科技教育司", offices: ["综合处", "项目一处", "项目二处", "规划评估处", "生物安全一处", "生物安全二处", "医学教育处"] },
+    { id: "nhc_drug", ministry: "nhc", name: "药物政策与基本药物制度司", offices: ["综合处", "药物政策处", "药品目录管理处", "药品供应保障协调处"] },
+    { id: "nhc_food", ministry: "nhc", name: "食品安全标准与监测评估司", offices: ["综合处", "食品安全标准管理处", "食品安全风险监测与评估处", "食品营养处"] },
     { id: "nhc_ageing", ministry: "nhc", name: "老龄健康司", offices: ["综合处", "健康服务处", "医养结合处"] },
     { id: "nhc_maternal", ministry: "nhc", name: "妇幼健康司", offices: ["综合处", "妇女卫生处", "儿童卫生处", "出生缺陷防治处"] },
     { id: "nhc_occupational", ministry: "nhc", name: "职业健康司", offices: ["综合处", "预防处", "技术服务管理处", "职业病管理处"] },
-    { id: "nhc_population", ministry: "nhc", name: "人口家庭司", offices: ["综合处", "政策协调处", "监测评估处", "家庭发展指导处"] },
+    { id: "nhc_population", ministry: "nhc", name: "人口监测与家庭发展司", offices: ["综合处", "政策协调处", "监测评估处", "家庭发展指导处"] },
     { id: "nhc_publicity", ministry: "nhc", name: "宣传司", offices: ["综合处", "新闻网络处", "宣传处", "健康宣教处"] },
-    { id: "nhc_international", ministry: "nhc", name: "国际合作司", offices: ["综合处", "国际组织处", "区域合作处", "港澳台处"] },
-    { id: "nhsa_benefits", ministry: "nhsa", name: "待遇保障司", offices: ["筹资待遇处", "医疗救助处", "长期护理保险处", "生育保障处"] },
-    { id: "nhsa_services", ministry: "nhsa", name: "医药服务管理司", offices: ["医保目录处", "支付方式改革处", "定点协议管理处", "异地就医结算处", "经济性评价处"] },
-    { id: "nhsa_price", ministry: "nhsa", name: "医药价格和招标采购司", offices: ["药品耗材招采处", "医疗服务价格处", "价格监测处", "采购平台处"] },
-    { id: "nhsa_fund", ministry: "nhsa", name: "基金监管司", offices: ["基金监管处", "飞行检查处", "信用管理处", "经办稽核处"] },
-    { id: "nhsa_planning", ministry: "nhsa", name: "规划财务法规司", offices: ["规划统计处", "法规标准处", "基金预算处", "信息化处"] },
-    { id: "cdc_monitoring", ministry: "cdc", name: "监测预警司", offices: ["传染病监测处", "预警处", "信息平台处", "风险评估处"] },
-    { id: "cdc_emergency", ministry: "cdc", name: "应急处置司", offices: ["应急综合处", "应急处置处", "队伍装备处", "演练评估处"] },
-    { id: "cdc_immunization", ministry: "cdc", name: "卫生与免疫规划司", offices: ["免疫规划处", "健康危害因素处", "学校卫生处", "环境卫生处"] },
-    { id: "cdc_supervision", ministry: "cdc", name: "综合监督司", offices: ["监督综合处", "传染病监督处", "公共卫生监督处"] },
-    { id: "tcm_admin", ministry: "tcm", name: "医政管理与服务司", offices: ["中医医院管理处", "中药管理处", "中医药服务处", "传承创新处"] },
-    { id: "nmpa_drug", ministry: "nmpa", name: "药品注册与监管相关司局", offices: ["药品注册", "药品监管", "医疗器械监管", "综合监管"] },
-    { id: "ndrc_social", ministry: "ndrc", name: "社会发展司", offices: ["卫生健康发展", "公共服务", "重大项目"] },
-    { id: "mof_social", ministry: "mof", name: "社会保障司", offices: ["卫生健康资金", "医保基金预算", "公共卫生投入"] },
-    { id: "mohrss_social", ministry: "mohrss", name: "社会保障与职业能力相关司局", offices: ["工伤保险", "职业能力建设", "专业技术人员管理"] },
-    { id: "mca_ageing", ministry: "mca", name: "养老服务与社会救助相关司局", offices: ["养老服务", "社会救助", "儿童福利"] },
-    { id: "moe_sports_health", ministry: "moe", name: "体育卫生与艺术教育司", offices: ["学校卫生", "学生健康", "健康教育"] },
-    { id: "samr_food", ministry: "samr", name: "食品安全与标准相关司局", offices: ["食品安全协调", "食品生产监管", "标准技术管理"] },
-    { id: "other_collab", ministry: "other", name: "协同治理", offices: ["综合协同", "联合发文", "配套执行"] }
+    { id: "nhc_international", ministry: "nhc", name: "国际合作司（港澳台办公室）", offices: ["综合处", "国际组织处", "欧美处", "亚太处", "非洲处（援外处）", "港澳台处"] },
+    { id: "nhc_healthcare", ministry: "nhc", name: "保健局", offices: ["综合处", "保健一处", "保健二处", "预防处", "财务处"] },
+    { id: "nhc_party", ministry: "nhc", name: "机关党委（党组巡视工作领导小组办公室）", offices: ["办公室（宣传、行业党建处）", "纪委办公室", "巡视工作处", "组织处", "群工处（统战处）"] },
+    { id: "nhc_retired", ministry: "nhc", name: "离退休干部局", offices: ["综合处", "组织处", "生活处", "健康处", "服务处"] },
+    { id: "nhsa_office", ministry: "nhsa", name: "办公室", offices: unpublished },
+    { id: "nhsa_planning", ministry: "nhsa", name: "规划财务和法规司", offices: unpublished },
+    { id: "nhsa_benefits", ministry: "nhsa", name: "待遇保障司", offices: unpublished },
+    { id: "nhsa_services", ministry: "nhsa", name: "医药服务管理司", offices: unpublished },
+    { id: "nhsa_price", ministry: "nhsa", name: "医药价格和招标采购司", offices: unpublished },
+    { id: "nhsa_fund", ministry: "nhsa", name: "基金监管司", offices: unpublished },
+    { id: "nhsa_party", ministry: "nhsa", name: "机关党委（人事司）", offices: unpublished },
+    { id: "cdc_general", ministry: "cdc", name: "综合司", offices: unpublished },
+    { id: "cdc_planning", ministry: "cdc", name: "规划财务与法规司", offices: unpublished },
+    { id: "cdc_monitoring", ministry: "cdc", name: "监测预警司", offices: unpublished },
+    { id: "cdc_emergency", ministry: "cdc", name: "应急处置司", offices: unpublished },
+    { id: "cdc_infectious", ministry: "cdc", name: "传染病防控司", offices: unpublished },
+    { id: "cdc_immunization", ministry: "cdc", name: "卫生与免疫规划司", offices: unpublished },
+    { id: "cdc_supervision_1", ministry: "cdc", name: "综合监督一司", offices: unpublished },
+    { id: "cdc_supervision_2", ministry: "cdc", name: "综合监督二司", offices: unpublished },
+    { id: "cdc_science", ministry: "cdc", name: "科技教育与国际合作司（港澳台办公室）", offices: unpublished },
+    { id: "cdc_party", ministry: "cdc", name: "机关党委（人事司）", offices: unpublished },
+    { id: "tcm_general", ministry: "tcm", name: "综合司", offices: unpublished },
+    { id: "tcm_hr", ministry: "tcm", name: "人事教育司", offices: unpublished },
+    { id: "tcm_planning", ministry: "tcm", name: "规划财务司", offices: unpublished },
+    { id: "tcm_legal", ministry: "tcm", name: "政策法规与监督司", offices: unpublished },
+    { id: "tcm_admin", ministry: "tcm", name: "医政司", offices: ["综合处（行风处）", "医疗管理处（应急办公室）", "基层服务管理处"] },
+    { id: "tcm_integrated", ministry: "tcm", name: "中西医结合与少数民族医药司", offices: unpublished },
+    { id: "tcm_science", ministry: "tcm", name: "科技司（中药创新与发展司）", offices: unpublished },
+    { id: "tcm_international", ministry: "tcm", name: "国际合作司", offices: unpublished },
+    { id: "tcm_party", ministry: "tcm", name: "机关党委", offices: unpublished },
+    { id: "nmpa_planning", ministry: "nmpa", name: "综合和规划财务司", offices: unpublished },
+    { id: "nmpa_legal", ministry: "nmpa", name: "政策法规司", offices: unpublished },
+    { id: "nmpa_registration", ministry: "nmpa", name: "药品注册管理司（中药民族药监督管理司）", offices: unpublished },
+    { id: "nmpa_drug", ministry: "nmpa", name: "药品监督管理司", offices: unpublished },
+    { id: "nmpa_device_registration", ministry: "nmpa", name: "医疗器械注册管理司", offices: unpublished },
+    { id: "nmpa_device", ministry: "nmpa", name: "医疗器械监督管理司", offices: unpublished },
+    { id: "ndrc_social", ministry: "ndrc", name: "社会发展司", offices: unpublished },
+    { id: "mof_social", ministry: "mof", name: "社会保障司", offices: ["办公室", "综合处", "基金管理处", "卫生健康处", "医疗保障处", "养老保障处", "就业保障处", "民政事务处", "退役事务处"] },
+    { id: "mohrss_social", ministry: "mohrss", name: "社会保险相关司局", offices: unpublished },
+    { id: "mca_ageing", ministry: "mca", name: "养老服务相关司局", offices: unpublished },
+    { id: "moe_sports_health", ministry: "moe", name: "体育卫生与艺术教育司", offices: unpublished },
+    { id: "samr_food", ministry: "samr", name: "食品安全相关司局", offices: unpublished },
+    { id: "other_collab", ministry: "other", name: "协同治理", offices: unpublished }
   ];
 
   const fallback = {
@@ -254,6 +281,9 @@
 
   const byMinistry = new Map(ministries.map((item) => [item.id, item]));
   const byBureau = new Map(bureaus.map((item) => [item.id, item]));
+  const legacyBureauIds = new Map([
+    ["cdc_supervision", "cdc_supervision_1"]
+  ]);
 
   function textOf(policy) {
     return [
@@ -263,7 +293,7 @@
   }
 
   function extractDocNo(policy) {
-    const text = [policy.pc, policy.t, policy.s].filter(Boolean).join(" ");
+    const text = [policy.pcv, policy.pc, policy.t, policy.s].filter(Boolean).join(" ");
     const match = text.match(/[\u4e00-\u9fa5A-Za-z]{1,16}〔\d{4}〕\d+号/);
     return match ? match[0] : "";
   }
@@ -329,12 +359,38 @@
     };
   }
 
+  function normalizeRoute(route) {
+    if (!route) return null;
+    const bureauId = legacyBureauIds.get(route.bureauId) || route.bureauId;
+    const bureau = byBureau.get(bureauId);
+    if (!bureau) {
+      return { ...route, office: route.office || UNPUBLISHED_OFFICE };
+    }
+    const ministry = byMinistry.get(bureau.ministry) || byMinistry.get("other");
+    const offices = bureau.offices && bureau.offices.length ? bureau.offices : unpublished;
+    const office = offices.includes(route.office) ? route.office : UNPUBLISHED_OFFICE;
+    const ministryIds = [bureau.ministry, ...(route.ministryIds || [])]
+      .filter(Boolean)
+      .filter((id, index, arr) => arr.indexOf(id) === index);
+    return {
+      ...route,
+      ministryId: bureau.ministry,
+      ministryName: ministry.name,
+      ministryIds,
+      bureauId: bureau.id,
+      bureauName: bureau.name,
+      office,
+      officeSource: office === UNPUBLISHED_OFFICE ? "official_unpublished" : "official_page"
+    };
+  }
+
   window.POLICY_TAXONOMY = {
     ministries,
     bureaus,
     byMinistry,
     byBureau,
     classify,
+    normalizeRoute,
     bureausFor(ministryId) {
       return bureaus.filter((item) => !ministryId || item.ministry === ministryId);
     },

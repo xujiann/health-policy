@@ -27,10 +27,13 @@ async function boot() {
     const prepared = preparePolicyCorpus(pol);
     state.interpretations = prepared.interpretations;
     state.excluded = prepared.excluded;
-    state.policies = prepared.policies.map((p) => ({
-      ...p,
-      tx: p.txv || window.POLICY_TAXONOMY?.classify(p) || null
-    }));
+    state.policies = prepared.policies.map((p) => {
+      const routed = window.POLICY_TAXONOMY?.classify(p) || p.txv || null;
+      return {
+        ...p,
+        tx: window.POLICY_TAXONOMY?.normalizeRoute(routed) || null
+      };
+    });
     attachInterpretations(state.policies, state.interpretations);
     state.meta = buildRuntimeMeta(state.policies, meta);
     state.trends = buildRuntimeTrends(state.policies, tr);
@@ -720,6 +723,7 @@ function itemHTML(p, q, options = {}) {
     ? `<div class="route-evidence">
         ${p.tx.docNo ? `<span>文号：${esc(p.tx.docNo)}</span>` : ""}
         ${p.tx.docPrefix ? `<span>前缀：${esc(p.tx.docPrefix)}</span>` : ""}
+        ${p.tx.officeSource === "official_unpublished" ? `<span>处室：官网未公开，按司局归口</span>` : ""}
         ${p.tx.evidence ? `<span>${esc(p.tx.evidence)}</span>` : ""}
         ${p.tx.confidence ? `<span>置信度：${esc(String(Math.round(Number(p.tx.confidence) * 100)))}%</span>` : ""}
       </div>`
