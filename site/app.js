@@ -1006,6 +1006,13 @@ const KEYWORD_SYNONYMS = {
   "数字健康": ["信息化", "互联网医疗", "远程医疗", "健康医疗大数据", "智慧医院"],
 };
 
+const POLICY_PHASES = [
+  { name: "医改奠基期", years: [2009, 2015], note: "以基本制度、服务体系和基层能力建设为主" },
+  { name: "战略成型期", years: [2016, 2018], note: "健康中国、分级诊疗和资源布局进入系统部署" },
+  { name: "行动扩展期", years: [2019, 2021], note: "专项行动、疫情防控、绩效评价和高质量发展叠加推进" },
+  { name: "深化治理期", years: [2022, 2026], note: "资源均衡、数字治理、三医协同和精细化监管加强" },
+];
+
 function expandWords(words) {
   const all = [];
   words.forEach((w) => {
@@ -1064,6 +1071,7 @@ function renderKeywordInsight(keyword) {
   const orgs = groupCount(hits, (p) => p.ogv || p.og || "未标注").slice(0, 5);
   const routes = groupCount(hits.filter((p) => p.tx?.bureauName), (p) =>
     [p.tx.ministryName, p.tx.bureauName].filter(Boolean).join(" / ")).slice(0, 5);
+  const peak = years.map((y) => [y, counts[y] || 0]).sort((a, b) => b[1] - a[1])[0] || ["-", 0];
   const yearly = years.map((y) => {
     const n = counts[y] || 0;
     return `<button type="button" class="${n ? "has-hit" : ""}" data-year="${y}" data-theme="" style="--h:${Math.max(4, Math.round(n / max * 100))}%"><span>${n}</span><em>${y}</em></button>`;
@@ -1074,14 +1082,21 @@ function renderKeywordInsight(keyword) {
       <article><span>命中文件</span><strong>${hits.length}</strong></article>
       <article><span>首次出现</span><strong>${stage.first}</strong></article>
       <article><span>最近年份</span><strong>${stage.latest}</strong></article>
-      <article><span>当前阶段</span><strong>${esc(stage.status)}</strong></article>
+      <article><span>峰值年份</span><strong>${peak[0]} · ${peak[1]}</strong></article>
+    </div>
+    <div class="insight-action-row">
+      <span>当前判断：<strong>${esc(stage.status)}</strong> · 近三年 ${stage.recent} 篇，前三年 ${stage.prev} 篇</span>
+      <button type="button" data-insight-action="browse">进入政策清单</button>
+      <button type="button" data-insight-action="export">导出专题简报</button>
     </div>
     <div class="insight-bars" aria-label="${esc(keyword)}年度政策数量">${yearly}</div>
+    ${phaseTimelineHTML(hits, keyword)}
     <div class="insight-columns">
       ${insightRankHTML("相关主题", themes)}
       ${insightRankHTML("主要机关", orgs)}
       ${insightRankHTML("归口司局", routes)}
     </div>
+    ${departmentShiftHTML(hits)}
     <div class="insight-policies">
       <strong>近期代表文件</strong>
       ${recentPolicies.length ? recentPolicies.map((p) =>
@@ -1095,6 +1110,36 @@ function renderKeywordInsight(keyword) {
       $("#q").value = keyword;
       applyFilters();
     }));
+  box.querySelectorAll("button[data-insight-action]").forEach((b) =>
+    b.addEventListener("click", () => {
+      if (b.dataset.insightAction === "browse") {
+        showView("browse");
+        resetBrowseControls();
+        $("#q").value = keyword;
+        state.filtered = keywordMatchedPolicies(keyword)
+          .sort((a, b) => b.d.localeCompare(a.d));
+        state.page = 1;
+        renderList();
+        $("#result-info").textContent = `共 ${state.filtered.length} 篇 · 专题同义词口径 · ${keyword}`;
+        $("#view-browse")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        exportKeywordBrief(keyword, hits, counts, themes, orgs, routes, stage, peak);
+      }
+    }));
+  box.querySelectorAll("button[data-phase-filter]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const [start, end] = b.dataset.phaseFilter.split("-").map(Number);
+      showView("browse");
+      resetBrowseControls();
+      $("#q").value = b.dataset.keyword || keyword;
+      state.filtered = keywordMatchedPolicies(keyword)
+        .filter((p) => p.y >= start && p.y <= end)
+        .sort((a, b) => b.d.localeCompare(a.d));
+      state.page = 1;
+      renderList();
+      $("#result-info").textContent = `共 ${state.filtered.length} 篇 · ${start}-${end} · ${keyword}`;
+      $("#view-browse")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
 }
 
 function insightRankHTML(title, rows) {
@@ -1102,6 +1147,78 @@ function insightRankHTML(title, rows) {
     (rows.length ? rows.map(([name, n]) =>
       `<div><span>${esc(name)}</span><em>${n}</em></div>`).join("") : `<p class="muted">暂无数据</p>`) +
     `</article>`;
+}
+
+function phaseTimelineHTML(hits, keyword) {
+  const total = hits.length || 1;
+  const cards = POLICY_PHASES.map((phase) => {
+    const [start, end] = phase.years;
+    const items = hits.filter((p) => p.y >= start && p.y <= end);
+    const topThemes = groupCount(items, (p) => p.th || []).slice(0, 2).map(([name]) => name).join("、") || "暂无";
+    const lead = items.slice().sort((a, b) => b.d.localeCompare(a.d))[0];
+    return `<article data-phase-start="${start}" data-phase-end="${end}">
+      <div><span>${start}-${end}</span><strong>${esc(phase.name)}</strong></div>
+      <em>${items.length}篇 · ${Math.round(items.length / total * 100)}%</em>
+      <p>${esc(phase.note)}</p>
+      <small>主题：${esc(topThemes)}</small>
+      ${lead ? `<button type="button" data-phase-filter="${start}-${end}" data-keyword="${esc(keyword)}">看本阶段文件</button>` : ""}
+    </article>`;
+  }).join("");
+  return `<div class="phase-timeline">${cards}</div>`;
+}
+
+function departmentShiftHTML(hits) {
+  const blocks = POLICY_PHASES.map((phase) => {
+    const [start, end] = phase.years;
+    const items = hits.filter((p) => p.y >= start && p.y <= end);
+    const rows = groupCount(items.filter((p) => p.tx?.bureauName), (p) =>
+      [p.tx.ministryName, p.tx.bureauName].filter(Boolean).join(" / ")).slice(0, 3);
+    return `<article>
+      <strong>${esc(phase.name)}</strong>
+      ${rows.length ? rows.map(([name, n]) => `<div><span>${esc(name)}</span><em>${n}</em></div>`).join("") : `<p class="muted">暂无明确司局归口</p>`}
+    </article>`;
+  }).join("");
+  return `<div class="dept-shift"><h3>部门重心变化</h3><div>${blocks}</div></div>`;
+}
+
+function keywordBriefMarkdown(keyword, hits, counts, themes, orgs, routes, stage, peak) {
+  const lines = [
+    `# ${keyword}政策演进专题简报`,
+    "",
+    `- 命中文件：${hits.length}篇`,
+    `- 首次出现：${stage.first}`,
+    `- 最近年份：${stage.latest}`,
+    `- 峰值年份：${peak[0]}（${peak[1]}篇）`,
+    `- 当前判断：${stage.status}`,
+    "",
+    "## 主要主题",
+    ...themes.map(([name, n]) => `- ${name}：${n}篇`),
+    "",
+    "## 主要发文机关",
+    ...orgs.map(([name, n]) => `- ${name}：${n}篇`),
+    "",
+    "## 主要归口司局",
+    ...(routes.length ? routes.map(([name, n]) => `- ${name}：${n}篇`) : ["- 暂无明确司局归口"]),
+    "",
+    "## 年度分布",
+    ...state.trends.years.map((y) => `- ${y}：${counts[y] || 0}篇`),
+    "",
+    "## 近期代表文件",
+    ...hits.slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 10).map((p) =>
+      `- ${p.d || ""} ${p.t}${p.pcv || p.pc ? `（${p.pcv || p.pc}）` : ""} ${p.u || ""}`)
+  ];
+  return lines.join("\n");
+}
+
+function exportKeywordBrief(keyword, hits, counts, themes, orgs, routes, stage, peak) {
+  const md = keywordBriefMarkdown(keyword, hits, counts, themes, orgs, routes, stage, peak);
+  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${keyword.replace(/[\\/:*?"<>|]/g, "_")}-政策演进专题简报.md`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
 }
 
 function renderThemeHeatmap() {
