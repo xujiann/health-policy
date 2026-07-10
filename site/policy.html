@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xujiann.github.io/health-policy/policy.html">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=37">
+<link rel="stylesheet" href="style.css?v=38">
 </head>
 <body>
 <header class="top">
@@ -48,6 +48,7 @@
     </article>
   </section>
   <section id="latest-panel" class="latest-panel hidden"></section>
+  <section id="quality-dashboard" class="quality-dashboard hidden" aria-label="数据质量与更新状态"></section>
 
   <!-- ============ 政策检索 ============ -->
   <section id="view-browse" class="view">
@@ -133,6 +134,45 @@
     </div>
     <div class="chart-box"><canvas id="chart"></canvas></div>
     <div id="forecast-box" class="forecast-box"></div>
+    <section class="analysis-lab" aria-label="政策可视化分析">
+      <div class="analysis-head">
+        <div>
+          <span>专题研判</span>
+          <h2>关键词政策演进</h2>
+        </div>
+        <div class="analysis-search">
+          <input id="insight-keyword" type="search" value="医共体" placeholder="输入关键词，如：医共体、区域医疗中心、护理">
+          <button id="insight-run" type="button">分析</button>
+        </div>
+      </div>
+      <div id="keyword-insight" class="keyword-insight"></div>
+    </section>
+    <section class="analysis-grid" aria-label="政策结构可视化">
+      <article class="analysis-block">
+        <div class="analysis-block-head">
+          <span>主题 × 年份</span>
+          <h3>政策热力图</h3>
+        </div>
+        <div id="theme-heatmap" class="heatmap"></div>
+      </article>
+      <article class="analysis-block">
+        <div class="analysis-block-head">
+          <span>司局 × 主题</span>
+          <h3>归口矩阵</h3>
+        </div>
+        <div id="dept-theme-matrix" class="matrix"></div>
+      </article>
+    </section>
+    <section class="analysis-lab" aria-label="政策关系网络">
+      <div class="analysis-head">
+        <div>
+          <span>文件关系</span>
+          <h2>政策网络预览</h2>
+        </div>
+        <p>按当前关键词提取同主题、同司局、同归口文件之间的联系。</p>
+      </div>
+      <div id="policy-network" class="policy-network"></div>
+    </section>
     <div class="theme-detail">
       <label>查看主题命中政策：
         <select id="theme-pick"></select>
@@ -150,6 +190,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=6"></script>
-<script src="app.js?v=34"></script>
+<script src="app.js?v=35"></script>
 </body>
 </html>

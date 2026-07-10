@@ -527,6 +527,7 @@ function initSummaryPanel() {
   $("#stat-checked-at").textContent = lastCheckedAt(m);
   renderLatestPanel();
   renderQualityPanel();
+  renderQualityDashboard();
 }
 
 function renderLatestPanel() {
@@ -609,6 +610,78 @@ function taxonomyText(p) {
   if (!p.tx) return "";
   const officeSource = p.tx.officeSource === "official_unpublished" ? "官网未公开 处室未公开" : "官网处室";
   return `${p.tx.ministryName} ${p.tx.bureauName} ${p.tx.office} ${p.tx.assignment} ${p.tx.docPrefix || ""} ${officeSource} ${p.tx.evidence || ""}`;
+}
+
+function pct(n, d) {
+  return d ? Math.round(n / d * 100) + "%" : "-";
+}
+
+function recentPolicyCount(days = 30) {
+  const latest = latestPolicyDate();
+  if (!latest || latest === "-") return 0;
+  const end = new Date(latest + "T00:00:00");
+  const start = new Date(end);
+  start.setDate(start.getDate() - days + 1);
+  return state.policies.filter((p) => {
+    if (!p.d) return false;
+    const d = new Date(p.d + "T00:00:00");
+    return d >= start && d <= end;
+  }).length;
+}
+
+function renderQualityDashboard() {
+  const box = $("#quality-dashboard");
+  if (!box) return;
+  const m = state.meta;
+  const q = m.quality || {};
+  const total = m.policy_total || m.total || 0;
+  const docKnown = (q.docOfficial || 0) + (q.docExtracted || 0);
+  const orgKnown = (q.orgOfficial || 0) + (q.orgExtracted || 0);
+  const strict = (m.route_count || {})["文号归口"] || 0;
+  const inferred = (m.route_count || {})["机关归口"] || 0;
+  const excludedAll = (m.excluded_total || 0) + (state.interpretations?.length || 0);
+  box.classList.remove("hidden");
+  box.innerHTML = `
+    <div class="quality-dashboard-head">
+      <div>
+        <span>数据质量与更新状态</span>
+        <h2>政策文件清洗、归口与更新监测</h2>
+      </div>
+      <p>更新时间 ${esc(lastCheckedAt(m))} · 最近30天政策 ${recentPolicyCount(30)} 篇</p>
+    </div>
+    <div class="quality-dashboard-grid">
+      ${qualityCard("政策文件", total, "清洗后进入分析的正式政策文件")}
+      ${qualityCard("排除内容", excludedAll, "解读、新闻、列表页、客户端下载页等不作为独立政策收录")}
+      ${qualityCard("文号覆盖", pct(docKnown, total), `${docKnown}/${total}`)}
+      ${qualityCard("机关覆盖", pct(orgKnown, total), `${orgKnown}/${total}`)}
+      ${qualityCard("文号严格归口", pct(strict, total), `${strict}/${total}`)}
+      ${qualityCard("机关补充归口", inferred, "用于补足无法按文号判断的文件")}
+    </div>
+    <div class="quality-dashboard-actions">
+      <button type="button" data-quality-filter="doc_missing">查看缺少文号</button>
+      <button type="button" data-quality-filter="org_missing">查看缺少机关</button>
+      <button type="button" data-quality-filter="doc_strict">仅看文号严格归口</button>
+    </div>`;
+  box.querySelectorAll("button[data-quality-filter]").forEach((b) =>
+    b.addEventListener("click", () => {
+      showView("browse");
+      if (b.dataset.qualityFilter === "doc_missing") {
+        resetBrowseControls();
+        $("#f-doc-state").value = "doc_missing";
+      } else if (b.dataset.qualityFilter === "org_missing") {
+        resetBrowseControls();
+        $("#f-doc-state").value = "org_missing";
+      } else {
+        resetBrowseControls();
+        $("#f-route-mode").value = "doc_strict";
+      }
+      applyFilters();
+      $("#view-browse")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }));
+}
+
+function qualityCard(label, value, note) {
+  return `<article><span>${esc(label)}</span><strong>${esc(String(value))}</strong><em>${esc(note)}</em></article>`;
 }
 
 function highlight(text, q) {
@@ -893,6 +966,269 @@ function initTrend() {
       state.viewMode = e.target.value;
       rebuildChart();
     }));
+  initAnalysisLab();
+  renderAnalysisLab();
+}
+
+function initAnalysisLab() {
+  const input = $("#insight-keyword");
+  const run = $("#insight-run");
+  if (!input || !run) return;
+  const apply = () => {
+    const value = input.value.trim() || "医共体";
+    input.value = value;
+    renderAnalysisLab(value);
+    addCustomKeyword(value);
+  };
+  run.addEventListener("click", apply);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") apply(); });
+}
+
+function renderAnalysisLab(keyword = $("#insight-keyword")?.value || "医共体") {
+  renderKeywordInsight(keyword);
+  renderThemeHeatmap();
+  renderDeptThemeMatrix();
+  renderPolicyNetwork(keyword);
+}
+
+function splitWords(raw) {
+  return (raw || "").split(/[，,\s]+/).map((w) => w.trim()).filter(Boolean);
+}
+
+const KEYWORD_SYNONYMS = {
+  "医共体": ["医疗卫生共同体", "县域医共体", "紧密型县域", "紧密型医疗卫生共同体"],
+  "区域医疗中心": ["国家区域医疗中心", "省级区域医疗中心", "医疗中心设置标准", "优质医疗资源扩容"],
+  "护理": ["护士", "护理服务", "老年护理", "互联网+护理", "长期护理", "护理院"],
+  "长护险": ["长期护理保险", "长期护理"],
+  "长期护理保险": ["长护险", "长期护理"],
+  "分级诊疗": ["医联体", "医共体", "医疗联合体", "双向转诊"],
+  "医保支付": ["DRG", "DIP", "支付方式", "按病种付费", "总额预算"],
+  "数字健康": ["信息化", "互联网医疗", "远程医疗", "健康医疗大数据", "智慧医院"],
+};
+
+function expandWords(words) {
+  const all = [];
+  words.forEach((w) => {
+    all.push(w);
+    (KEYWORD_SYNONYMS[w] || []).forEach((s) => all.push(s));
+  });
+  return [...new Set(all.filter(Boolean))];
+}
+
+function policyText(p) {
+  return `${p.t || ""} ${p.s || ""} ${p.pc || ""} ${p.pcv || ""} ${p.og || ""} ${p.ogv || ""} ${(p.th || []).join(" ")} ${taxonomyText(p)}`;
+}
+
+function keywordMatchedPolicies(keyword) {
+  const words = expandWords(splitWords(keyword));
+  if (!words.length) return [];
+  return state.policies.filter((p) => {
+    const text = policyText(p).toLowerCase();
+    return words.some((w) => text.includes(w.toLowerCase()));
+  });
+}
+
+function groupCount(items, keyFn) {
+  const map = new Map();
+  items.forEach((item) => {
+    const raw = keyFn(item);
+    const keys = Array.isArray(raw) ? raw : [raw];
+    keys.filter(Boolean).forEach((key) => map.set(key, (map.get(key) || 0) + 1));
+  });
+  return [...map.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function stageText(years, counts) {
+  const first = years.find((y) => counts[y]);
+  const latest = [...years].reverse().find((y) => counts[y]);
+  const lastYear = years[years.length - 1];
+  const recent = years.slice(-3).reduce((sum, y) => sum + (counts[y] || 0), 0);
+  const prev = years.slice(-6, -3).reduce((sum, y) => sum + (counts[y] || 0), 0);
+  let status = "观察期";
+  if (recent >= prev && recent >= 6) status = "持续深化";
+  else if (recent > 0 && prev > recent) status = "规范完善";
+  else if (!recent && latest && latest < lastYear - 2) status = "阶段性沉淀";
+  return { first: first || "-", latest: latest || "-", recent, prev, status };
+}
+
+function renderKeywordInsight(keyword) {
+  const box = $("#keyword-insight");
+  if (!box) return;
+  const hits = keywordMatchedPolicies(keyword);
+  const years = state.trends.years;
+  const counts = Object.fromEntries(years.map((y) => [y, 0]));
+  hits.forEach((p) => { counts[p.y] = (counts[p.y] || 0) + 1; });
+  const max = Math.max(1, ...years.map((y) => counts[y] || 0));
+  const stage = stageText(years, counts);
+  const themes = groupCount(hits, (p) => p.th || []).slice(0, 5);
+  const orgs = groupCount(hits, (p) => p.ogv || p.og || "未标注").slice(0, 5);
+  const routes = groupCount(hits.filter((p) => p.tx?.bureauName), (p) =>
+    [p.tx.ministryName, p.tx.bureauName].filter(Boolean).join(" / ")).slice(0, 5);
+  const yearly = years.map((y) => {
+    const n = counts[y] || 0;
+    return `<button type="button" class="${n ? "has-hit" : ""}" data-year="${y}" data-theme="" style="--h:${Math.max(4, Math.round(n / max * 100))}%"><span>${n}</span><em>${y}</em></button>`;
+  }).join("");
+  const recentPolicies = hits.sort((a, b) => b.d.localeCompare(a.d)).slice(0, 6);
+  box.innerHTML = `
+    <div class="insight-stats">
+      <article><span>命中文件</span><strong>${hits.length}</strong></article>
+      <article><span>首次出现</span><strong>${stage.first}</strong></article>
+      <article><span>最近年份</span><strong>${stage.latest}</strong></article>
+      <article><span>当前阶段</span><strong>${esc(stage.status)}</strong></article>
+    </div>
+    <div class="insight-bars" aria-label="${esc(keyword)}年度政策数量">${yearly}</div>
+    <div class="insight-columns">
+      ${insightRankHTML("相关主题", themes)}
+      ${insightRankHTML("主要机关", orgs)}
+      ${insightRankHTML("归口司局", routes)}
+    </div>
+    <div class="insight-policies">
+      <strong>近期代表文件</strong>
+      ${recentPolicies.length ? recentPolicies.map((p) =>
+        `<a href="${esc(p.u)}" target="_blank" rel="noopener"><span>${esc(p.d || "")}</span>${highlight(p.t, keyword)}<em>${esc(p.pcv || p.pc || "")}</em></a>`
+      ).join("") : `<p class="muted">暂无命中文件，可换一个关键词。</p>`}
+    </div>`;
+  box.querySelectorAll(".insight-bars button[data-year]").forEach((b) =>
+    b.addEventListener("click", () => {
+      showView("browse");
+      applyQuickFilter({ year: b.dataset.year });
+      $("#q").value = keyword;
+      applyFilters();
+    }));
+}
+
+function insightRankHTML(title, rows) {
+  return `<article><strong>${esc(title)}</strong>` +
+    (rows.length ? rows.map(([name, n]) =>
+      `<div><span>${esc(name)}</span><em>${n}</em></div>`).join("") : `<p class="muted">暂无数据</p>`) +
+    `</article>`;
+}
+
+function renderThemeHeatmap() {
+  const box = $("#theme-heatmap");
+  if (!box) return;
+  const years = state.trends.years;
+  const rows = Object.entries(state.trends.themes).slice(0, 12);
+  const max = Math.max(1, ...rows.flatMap(([, d]) => d.series));
+  box.innerHTML = `
+    <div class="heatmap-years">${years.map((y) => `<span>${y}</span>`).join("")}</div>
+    ${rows.map(([name, data]) => `
+      <div class="heatmap-row">
+        <button type="button" data-theme="${esc(name)}">${esc(name)}</button>
+        <div>
+          ${data.series.map((n, i) =>
+            `<span style="--v:${(n / max).toFixed(3)}" title="${esc(name)} ${years[i]}：${n}篇">${n || ""}</span>`
+          ).join("")}
+        </div>
+      </div>`).join("")}`;
+  box.querySelectorAll("button[data-theme]").forEach((b) =>
+    b.addEventListener("click", () => {
+      $("#theme-pick").value = b.dataset.theme;
+      renderThemeList(b.dataset.theme);
+      showThemeLine(b.dataset.theme);
+    }));
+}
+
+function renderDeptThemeMatrix() {
+  const box = $("#dept-theme-matrix");
+  if (!box) return;
+  const strict = state.policies.filter((p) => p.tx?.assignment === "文号归口" && p.tx?.bureauName);
+  const bureaus = groupCount(strict, (p) => p.tx.bureauName).slice(0, 9).map(([name]) => name);
+  const themes = Object.entries(state.trends.themes).slice(0, 8).map(([name]) => name);
+  const rows = bureaus.map((bureau) => {
+    const values = themes.map((theme) => strict.filter((p) => p.tx?.bureauName === bureau && (p.th || []).includes(theme)).length);
+    return { bureau, values };
+  });
+  const max = Math.max(1, ...rows.flatMap((r) => r.values));
+  box.innerHTML = `
+    <div class="matrix-head"><span></span>${themes.map((t) => `<span>${esc(t)}</span>`).join("")}</div>
+    ${rows.map((r) => `
+      <div class="matrix-row">
+        <button type="button" data-bureau="${esc(r.bureau)}">${esc(r.bureau)}</button>
+        ${r.values.map((n, i) =>
+          `<span style="--v:${(n / max).toFixed(3)}" title="${esc(r.bureau)} / ${esc(themes[i])}：${n}篇">${n || ""}</span>`
+        ).join("")}
+      </div>`).join("")}`;
+  box.querySelectorAll("button[data-bureau]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const bureau = window.POLICY_TAXONOMY.bureaus.find((item) => item.name === b.dataset.bureau);
+      if (!bureau) return;
+      showView("browse");
+      resetBrowseControls();
+      $("#f-route-mode").value = "doc_strict";
+      $("#f-ministry").value = bureau.ministry;
+      renderBureauOptions();
+      $("#f-bureau").value = bureau.id;
+      renderOfficeOptions();
+      applyFilters();
+    }));
+}
+
+function relationReasons(a, b) {
+  const reasons = [];
+  if (a.tx?.bureauId && a.tx.bureauId === b.tx?.bureauId) reasons.push("同司局");
+  if (a.tx?.office && a.tx.office === b.tx?.office) reasons.push("同处室");
+  const sharedThemes = (a.th || []).filter((t) => (b.th || []).includes(t));
+  if (sharedThemes.length) reasons.push(`同主题：${sharedThemes.slice(0, 2).join("、")}`);
+  const docA = (a.pcv || a.pc || "").slice(0, 4);
+  const docB = (b.pcv || b.pc || "").slice(0, 4);
+  if (docA && docA === docB) reasons.push("同文号体系");
+  return reasons;
+}
+
+function renderPolicyNetwork(keyword) {
+  const box = $("#policy-network");
+  if (!box) return;
+  const hits = keywordMatchedPolicies(keyword)
+    .sort((a, b) => b.d.localeCompare(a.d))
+    .slice(0, 12);
+  if (hits.length < 2) {
+    box.innerHTML = `<p class="muted">命中文件不足，暂不能形成关系网络。</p>`;
+    return;
+  }
+  const nodes = hits.map((p, i) => {
+    const angle = -Math.PI / 2 + i * 2 * Math.PI / hits.length;
+    const r = i ? 118 : 0;
+    return {
+      p, i,
+      x: Math.round(320 + Math.cos(angle) * r),
+      y: Math.round(155 + Math.sin(angle) * r),
+    };
+  });
+  const edges = [];
+  for (let i = 0; i < hits.length; i++) {
+    for (let j = i + 1; j < hits.length; j++) {
+      const reasons = relationReasons(hits[i], hits[j]);
+      if (reasons.length) edges.push({ i, j, reasons, w: reasons.length });
+    }
+  }
+  edges.sort((a, b) => b.w - a.w);
+  const shownEdges = edges.slice(0, 24);
+  const edgeList = shownEdges.slice(0, 8).map((e) => {
+    const a = hits[e.i], b = hits[e.j];
+    return `<li><span>${esc(e.reasons.join(" / "))}</span><strong>${esc(shortTitle(a.t))}</strong><em>${esc(shortTitle(b.t))}</em></li>`;
+  }).join("");
+  box.innerHTML = `
+    <svg viewBox="0 0 640 320" role="img" aria-label="${esc(keyword)}政策关系网络">
+      <g class="network-edges">
+        ${shownEdges.map((e) => {
+          const a = nodes[e.i], b = nodes[e.j];
+          return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" style="--w:${e.w}"><title>${esc(e.reasons.join(" / "))}</title></line>`;
+        }).join("")}
+      </g>
+      <g class="network-nodes">
+        ${nodes.map((n) => `
+          <a href="${esc(n.p.u)}" target="_blank" rel="noopener">
+            <circle cx="${n.x}" cy="${n.y}" r="${n.i ? 9 : 13}"><title>${esc(n.p.t)}</title></circle>
+          </a>`).join("")}
+      </g>
+    </svg>
+    <ol class="network-list">${edgeList || `<li><span>关系较弱</span><strong>建议增加关键词范围</strong><em>或切换主题</em></li>`}</ol>`;
+}
+
+function shortTitle(text) {
+  const s = text || "";
+  return s.length > 24 ? s.slice(0, 24) + "…" : s;
 }
 
 // 自定义词 → 相关 AI 主题联想（静态站内的“语义桥接”：把任意输入词引导到最相关的主题曲线）
@@ -927,8 +1263,11 @@ function showThemeLine(name) {
 
 // 某篇政策是否命中某组词；mode='strong' 只看标题，'all' 看标题+摘要
 function hitMode(p, words, mode) {
-  if (words.some((w) => p.t.includes(w))) return "strong";
-  if (mode === "all" && words.some((w) => p.s.includes(w))) return "weak";
+  const expanded = expandWords(words);
+  const title = (p.t || "").toLowerCase();
+  const summary = (p.s || "").toLowerCase();
+  if (expanded.some((w) => title.includes(w.toLowerCase()))) return "strong";
+  if (mode === "all" && expanded.some((w) => summary.includes(w.toLowerCase()))) return "weak";
   return null;
 }
 
