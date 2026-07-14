@@ -121,7 +121,7 @@ main{min-height:60vh;padding-top:18px}
 .filter-count{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:99px;
   background:var(--brand);color:#fff;font-size:11px}
 .filter-count.hidden{display:none}
-.filter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:9px}
+.filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:9px}
 .filter-grid select{width:100%;min-width:0}
 .active-filters{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:-4px 0 12px}
 .active-filters.hidden{display:none}

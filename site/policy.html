@@ -10,7 +10,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://xujiann.github.io/health-policy/policy.html">
 <title>卫生健康政策智能分析 · 检索与趋势预测</title>
-<link rel="stylesheet" href="style.css?v=40">
+<link rel="stylesheet" href="style.css?v=41">
 </head>
 <body>
 <header class="top">
@@ -91,6 +91,12 @@
       <details id="filter-details" class="filter-details">
         <summary>更多筛选 <span id="advanced-filter-count" class="filter-count hidden"></span></summary>
         <div class="filter-grid">
+          <select id="f-cat"><option value="">全部文件类别</option></select>
+          <select id="f-doc-type"><option value="">全部文种</option></select>
+          <select id="f-doc-prefix"><option value="">全部文号前缀</option></select>
+          <select id="f-recent"><option value="">全部时间范围</option></select>
+          <select id="f-interpretation"><option value="">全部解读状态</option></select>
+          <select id="f-relation"><option value="">全部关系状态</option></select>
           <select id="f-route"><option value="">全部归口依据</option></select>
           <select id="f-doc-state"><option value="">全部文号/机关状态</option></select>
         </div>
@@ -190,6 +196,6 @@
 
 <script src="vendor/chart.umd.min.js"></script>
 <script src="taxonomy.js?v=6"></script>
-<script src="app.js?v=37"></script>
+<script src="app.js?v=38"></script>
 </body>
 </html>
