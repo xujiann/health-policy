@@ -165,8 +165,10 @@ def main():
     args = parser.parse_args()
 
     policies = load_json("policies.json")
+    interpretations = load_json("interpretations.json") if os.path.exists(os.path.join(DATA, "interpretations.json")) else []
+    excluded = load_json("excluded.json") if os.path.exists(os.path.join(DATA, "excluded.json")) else []
     previous_meta = load_json("meta.json")
-    by_id = {p["id"]: p for p in policies}
+    by_id = {p["id"]: p for p in [*policies, *interpretations, *excluded]}
     recent = fetch_recent(args.days, args.pages, all_keywords=args.all_keywords)
     new_items = [p for pid, p in recent.items() if pid not in by_id]
     if new_items:
