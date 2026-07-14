@@ -14,8 +14,8 @@ import time
 import requests
 
 from harvest import CATEGORIES, API, UA, clean, is_relevant, parse_date
-from keywords import SEED_KEYWORDS, TAG_THEMES
-from policy_enrichment import enrich_policies
+from keywords import SEED_KEYWORDS
+from policy_pipeline import build_outputs, write_outputs
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "site", "data")
@@ -26,13 +26,6 @@ RECENT_KEYWORDS = [
     "分级诊疗", "医共体", "基层医疗卫生", "公共卫生", "公立医院",
     "医保目录", "医保支付", "长期护理保险", "生育", "托育",
 ]
-
-CAT_LABEL = {
-    "gongwen": "国务院公文",
-    "bumenfile": "部门文件",
-    "otherfile": "其他文件",
-    "gongbao": "国务院公报",
-}
 
 THEME_HINTS = {
     "医改综合": ["医改", "医药卫生体制改革", "三医联动", "改革重点任务"],
@@ -163,43 +156,6 @@ def fetch_recent(days, pages, all_keywords=False):
     return found
 
 
-def rebuild_meta_and_trends(policies, previous_meta):
-    year_count, cat_count, org_count, theme_total = {}, {}, {}, {}
-    years = sorted({p["y"] for p in policies})
-    for p in policies:
-        year_count[str(p["y"])] = year_count.get(str(p["y"]), 0) + 1
-        cat_count[p["c"]] = cat_count.get(p["c"], 0) + 1
-        org_key = p.get("ogvk") or p.get("ogk") or "未标注"
-        org_count[org_key] = org_count.get(org_key, 0) + 1
-        for th in p.get("th") or []:
-            if th in TAG_THEMES:
-                theme_total[th] = theme_total.get(th, 0) + 1
-    trends = {"years": years, "themes": {}}
-    for name in sorted(TAG_THEMES.keys(), key=lambda n: -theme_total.get(n, 0)):
-        series = []
-        for y in years:
-            series.append(sum(1 for p in policies if p["y"] == y and name in (p.get("th") or [])))
-        trends["themes"][name] = {
-            "desc": TAG_THEMES[name],
-            "series": series,
-            "total": sum(series),
-        }
-    built_at = dt.datetime.now().isoformat(timespec="seconds")
-    meta = {
-        **previous_meta,
-        "built_at": built_at,
-        "checked_at": built_at,
-        "total": len(policies),
-        "year_range": [min(years), max(years)] if years else [],
-        "cat_label": CAT_LABEL,
-        "cat_count": cat_count,
-        "year_count": dict(sorted(year_count.items())),
-        "top_orgs": sorted(org_count.items(), key=lambda kv: -kv[1])[:40],
-        "theme_facet": sorted(theme_total.items(), key=lambda kv: -kv[1]),
-    }
-    return meta, trends
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=45)
@@ -215,31 +171,42 @@ def main():
     new_items = [p for pid, p in recent.items() if pid not in by_id]
     if new_items:
         by_id.update({p["id"]: p for p in new_items})
-    policies = sorted(by_id.values(), key=lambda p: p.get("d") or "", reverse=True)
-    enriched = enrich_policies([dict(p) for p in policies])
-    changed = json.dumps(enriched, ensure_ascii=False, sort_keys=True) != json.dumps(policies, ensure_ascii=False, sort_keys=True)
-    if new_items or changed:
-        policies = enriched
-        meta, trends = rebuild_meta_and_trends(policies, previous_meta)
+    raw_policies = sorted(by_id.values(), key=lambda p: p.get("d") or "", reverse=True)
+    outputs = build_outputs(raw_policies, previous_meta)
+    output_files = {
+        "policies": "policies.json",
+        "interpretations": "interpretations.json",
+        "excluded": "excluded.json",
+        "meta": "meta.json",
+        "trends": "trends.json",
+        "quality": "quality_report.json",
+        "relationships": "relationships.json",
+        "keyword_timelines": "keyword_timelines.json",
+    }
+    changed = new_items or any(
+        json.dumps(load_json(name) if os.path.exists(os.path.join(DATA, name)) else None,
+                   ensure_ascii=False, sort_keys=True)
+        != json.dumps(outputs[key], ensure_ascii=False, sort_keys=True)
+        for key, name in output_files.items()
+    )
+    if changed:
         if not args.dry_run:
-            dump_json("policies.json", policies)
-            dump_json("meta.json", meta)
-            dump_json("trends.json", trends)
+            write_outputs(outputs, DATA)
     else:
-        meta = {
-            **previous_meta,
-            "checked_at": dt.datetime.now().isoformat(timespec="seconds"),
-        }
+        meta = {**previous_meta, "checked_at": dt.datetime.now().isoformat(timespec="seconds")}
         if not args.dry_run:
             dump_json("meta.json", meta)
     print(json.dumps({
         "new": len(new_items),
-        "total": len(by_id),
+        "raw_total": len(by_id),
+        "policy_total": outputs["meta"].get("total"),
+        "interpretation_total": outputs["meta"].get("interpretation_total"),
+        "excluded_total": outputs["meta"].get("excluded_total"),
         "days": args.days,
         "pages": args.pages,
         "all_keywords": args.all_keywords,
         "dry_run": args.dry_run,
-        "checked_at": meta.get("checked_at"),
+        "checked_at": (outputs.get("meta") or meta).get("checked_at"),
     }, ensure_ascii=False))
 
 

@@ -52,6 +52,8 @@ jobs:
             args+=(--all-keywords)
           fi
           python update_static_data.py "${args[@]}"
+      - name: Verify generated data
+        run: python verify_data_quality.py
       - name: Commit updated data
         run: |
           if [[ -n "$(git status --porcelain site/data)" ]]; then

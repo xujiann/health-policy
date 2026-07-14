@@ -21,7 +21,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from keywords import TAG_THEMES  # noqa: E402
-from policy_enrichment import enrich_policies  # noqa: E402
+from policy_pipeline import build_outputs, write_outputs  # noqa: E402
 
 DB_PATH = os.path.join(HERE, "policies.db")
 OUT = os.path.join(HERE, "site", "data")
@@ -71,14 +71,12 @@ def main():
            FROM policies WHERE pubyear IS NOT NULL ORDER BY pubdate DESC"""
     ).fetchall()
 
-    policies = []
-    year_count = {}
-    cat_count = {}
+    raw_policies = []
     for r in rows:
         org = norm_org(r["puborg"])
         summ = (r["summary"] or "")[:140]
         th = [t for t in theme_map.get(r["id"], []) if t in TAG_THEMES]
-        policies.append(
+        raw_policies.append(
             {
                 "id": r["id"],
                 "t": r["title"],
@@ -93,65 +91,22 @@ def main():
                 "th": th,
             }
         )
-        year_count[str(r["pubyear"])] = year_count.get(str(r["pubyear"]), 0) + 1
-        cat_count[r["category"]] = cat_count.get(r["category"], 0) + 1
-
-    policies = enrich_policies(policies)
-    org_count = {}
-    for p in policies:
-        org = p.get("ogvk") or p.get("ogk") or "未标注"
-        org_count[org] = org_count.get(org, 0) + 1
-
-    # ---- 趋势：各 AI 主题逐年数量（基于 LLM 打标的语义标签）----
-    years = sorted({p["y"] for p in policies})
-    theme_year = {name: {y: 0 for y in years} for name in TAG_THEMES}
-    theme_total = {name: 0 for name in TAG_THEMES}
-    for p in policies:
-        for th in p["th"]:
-            theme_year[th][p["y"]] += 1
-            theme_total[th] += 1
-    # 按总数降序，前端默认只显示前若干条，其余图例可点开
-    ordered = sorted(TAG_THEMES.keys(), key=lambda n: -theme_total[n])
-    trends = {"years": years, "themes": {}}
-    for name in ordered:
-        trends["themes"][name] = {
-            "desc": TAG_THEMES[name],
-            "series": [theme_year[name][y] for y in years],
-            "total": theme_total[name],
-        }
 
     tagged = count_tagged(con)
-    top_orgs = sorted(org_count.items(), key=lambda kv: -kv[1])[:40]
-    # 主题分面按总数降序，便于检索页下拉
-    theme_facet = sorted(theme_total.items(), key=lambda kv: -kv[1])
-    meta = {
-        "built_at": dt.datetime.now().isoformat(timespec="seconds"),
-        "total": len(policies),
-        "tagged": tagged,
-        "year_range": [min(years), max(years)] if years else [],
-        "cat_label": CAT_LABEL,
-        "cat_count": cat_count,
-        "year_count": dict(sorted(year_count.items())),
-        "top_orgs": top_orgs,
-        "theme_facet": theme_facet,
-    }
-
-    def dump(name, obj):
-        path = os.path.join(OUT, name)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(obj, f, ensure_ascii=False, separators=(",", ":"))
-        return os.path.getsize(path)
-
-    s1 = dump("policies.json", policies)
-    s2 = dump("trends.json", trends)
-    s3 = dump("meta.json", meta)
+    outputs = build_outputs(raw_policies, {"tagged": tagged})
+    write_outputs(outputs, OUT)
+    meta = outputs["meta"]
+    trends = outputs["trends"]
+    s1 = os.path.getsize(os.path.join(OUT, "policies.json"))
+    s2 = os.path.getsize(os.path.join(OUT, "trends.json"))
+    s3 = os.path.getsize(os.path.join(OUT, "meta.json"))
     con.close()
-    print(f"导出完成：{len(policies)} 篇政策，已打标 {tagged} 篇")
+    print(f"导出完成：{meta['total']} 篇政策，已打标 {meta['tagged']} 篇")
     print(f"  policies.json {s1/1024/1024:.2f} MB")
     print(f"  trends.json   {s2/1024:.1f} KB")
     print(f"  meta.json     {s3/1024:.1f} KB")
-    print(f"  年份 {meta['year_range']}  分类 {cat_count}")
-    print(f"  主题命中 top5: {theme_facet[:5]}")
+    print(f"  年份 {meta['year_range']}  分类 {meta['cat_count']}")
+    print(f"  主题命中 top5: {meta['theme_facet'][:5]}")
 
 
 if __name__ == "__main__":

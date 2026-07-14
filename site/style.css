@@ -141,6 +141,9 @@ main{min-height:60vh;padding-top:18px}
 .quality-panel article{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:9px 10px}
 .quality-panel span{display:block;color:var(--muted);font-size:11px}
 .quality-panel strong{display:block;color:#0f172a;font-size:15px;margin-top:2px}
+.quality-report-line{grid-column:1/-1;background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;padding:9px 10px}
+.quality-report-line strong{display:inline;color:#065f46;font-size:13px;margin:0 8px 0 0}
+.quality-report-line span{display:inline;color:#0f766e;font-size:12px}
 .quality-dashboard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 16px;margin:-2px 0 14px}
 .quality-dashboard-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-end;margin-bottom:12px}
 .quality-dashboard-head span{display:block;color:var(--brand);font-size:12px;font-weight:800}
@@ -155,6 +158,7 @@ main{min-height:60vh;padding-top:18px}
 .quality-dashboard-actions button{border:1px solid #ccefe3;background:#ecfdf5;color:#065f46;border-radius:20px;
   padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer}
 .quality-dashboard-actions button:hover{background:#d1fae5;border-color:#99f6e4}
+.quality-alert{margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:9px 10px;font-size:12px;font-weight:700}
 .result-info{color:var(--muted);font-size:13px;margin-bottom:10px}
 
 .list{list-style:none;margin:0;padding:0;display:grid;gap:10px}

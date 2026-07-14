@@ -1,0 +1,35 @@
+[
+  {
+    "id": "manual-20260707-national-health-15th-plan",
+    "t": "国务院关于印发《国民健康“十五五”规划》的通知",
+    "pc": "国发〔2026〕23号",
+    "og": "国务院",
+    "ogk": "国务院",
+    "c": "gongwen",
+    "d": "2026-07-07",
+    "y": 2026,
+    "s": "国务院关于印发《国民健康“十五五”规划》的通知，国发〔2026〕23号。规划围绕优化全人群全方位全周期健康服务、筑牢卫生健康安全屏障、完善优质高效整合型医疗卫生服务体系、培育卫生健康高质量发展新动能、推进以健康为中心的高效能治理等部署未来五年国民健康工作。",
+    "u": "https://sousuo.www.gov.cn/zcwjk/policyDocumentLibrary?t=zhengcelibrary_gw",
+    "th": ["医改综合", "健康促进与教育", "公共卫生服务", "分级诊疗与基层", "互联网+医疗与数字健康"],
+    "pcv": "国发〔2026〕23号",
+    "pcs": "official_field",
+    "ogv": "国务院",
+    "ogs": "official_field",
+    "ogvk": "国务院",
+    "txv": {
+      "ministryId": "state",
+      "ministryName": "国务院及办公厅",
+      "ministryIds": ["state", "nhc", "nhsa", "cdc", "tcm", "ndrc", "mof"],
+      "bureauId": "state_health_reform",
+      "bureauName": "医改与健康中国综合政策",
+      "office": "综合政策",
+      "assignment": "文号归口",
+      "docNo": "国发〔2026〕23号",
+      "docPrefix": "国发",
+      "evidence": "文号前缀：国发；人工核验：国务院文件；主题关联：国民健康规划、健康中国、十五五",
+      "confidence": 0.95,
+      "orgSource": "official_field",
+      "docSource": "official_field"
+    }
+  }
+]

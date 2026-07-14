@@ -4,6 +4,7 @@
 const PAGE = 20;
 const state = {
   policies: [], interpretations: [], excluded: [], trends: null, meta: null,
+  qualityReport: null, relationships: null, keywordTimelines: null,
   filtered: [], page: 1, chart: null,
 };
 
@@ -17,16 +18,32 @@ async function loadJSON(p) {
   return r.json();
 }
 
+async function loadOptionalJSON(p, fallback) {
+  try {
+    return await loadJSON(p);
+  } catch (_e) {
+    return fallback;
+  }
+}
+
 async function boot() {
   try {
-    const [pol, tr, meta] = await Promise.all([
+    const [pol, tr, meta, interpretations, excluded, qualityReport, relationships, keywordTimelines] = await Promise.all([
       loadJSON("data/policies.json"),
       loadJSON("data/trends.json"),
       loadJSON("data/meta.json"),
+      loadOptionalJSON("data/interpretations.json", []),
+      loadOptionalJSON("data/excluded.json", []),
+      loadOptionalJSON("data/quality_report.json", null),
+      loadOptionalJSON("data/relationships.json", null),
+      loadOptionalJSON("data/keyword_timelines.json", null),
     ]);
     const prepared = preparePolicyCorpus(pol);
-    state.interpretations = prepared.interpretations;
-    state.excluded = prepared.excluded;
+    state.interpretations = interpretations.length ? interpretations : prepared.interpretations;
+    state.excluded = excluded.length ? excluded : prepared.excluded;
+    state.qualityReport = qualityReport;
+    state.relationships = relationships;
+    state.keywordTimelines = keywordTimelines;
     state.policies = prepared.policies.map((p) => {
       const routed = window.POLICY_TAXONOMY?.classify(p) || p.txv || null;
       return {
@@ -125,8 +142,10 @@ function preparePolicyCorpus(items) {
 
 function attachInterpretations(policies, interpretations) {
   const byDocNo = new Map();
+  const byId = new Map();
   const byNormTitle = new Map();
   policies.forEach((p) => {
+    byId.set(p.id, p);
     const docNo = docNoFromText(`${p.pc || ""} ${p.t || ""} ${p.s || ""}`);
     if (docNo) byDocNo.set(docNo, p);
     const norm = normalizePolicyTitle(p.t);
@@ -136,7 +155,8 @@ function attachInterpretations(policies, interpretations) {
   interpretations.forEach((item) => {
     const text = `${item.t || ""} ${item.s || ""}`;
     const docNo = docNoFromText(text);
-    let target = docNo ? byDocNo.get(docNo) : null;
+    let target = item.target ? byId.get(item.target) : null;
+    if (!target) target = docNo ? byDocNo.get(docNo) : null;
     if (target && !hasQuotedTitleMatch(target, item, 0.45)) target = null;
     if (!target) {
       let best = { policy: null, score: 0 };
@@ -589,6 +609,7 @@ function renderQualityPanel() {
   const m = state.meta;
   const panel = $("#quality-panel");
   if (!panel) return;
+  const report = state.qualityReport || {};
   const route = m.route_count || {};
   const q = m.quality || {};
   const total = m.policy_total || m.total || 0;
@@ -602,7 +623,11 @@ function renderQualityPanel() {
   ];
   panel.innerHTML = items.map(([label, value]) =>
     `<article><span>${esc(label)}</span><strong>${esc(String(value))}</strong></article>`
-  ).join("");
+  ).join("") + `
+    <div class="quality-report-line">
+      <strong>审计状态：${esc(report.status || m.quality_status || "ok")}</strong>
+      <span>${esc((report.warnings || []).join("；") || "暂无高风险异常")}</span>
+    </div>`;
   $("#quality-details")?.classList.remove("hidden");
 }
 
@@ -633,6 +658,7 @@ function renderQualityDashboard() {
   const box = $("#quality-dashboard");
   if (!box) return;
   const m = state.meta;
+  const report = state.qualityReport || {};
   const q = m.quality || {};
   const total = m.policy_total || m.total || 0;
   const docKnown = (q.docOfficial || 0) + (q.docExtracted || 0);
@@ -657,6 +683,7 @@ function renderQualityDashboard() {
       ${qualityCard("文号严格归口", pct(strict, total), `${strict}/${total}`)}
       ${qualityCard("机关补充归口", inferred, "用于补足无法按文号判断的文件")}
     </div>
+    ${(report.warnings || []).length ? `<div class="quality-alert">${esc(report.warnings.join("；"))}</div>` : ""}
     <div class="quality-dashboard-actions">
       <button type="button" data-quality-filter="doc_missing">查看缺少文号</button>
       <button type="button" data-quality-filter="org_missing">查看缺少机关</button>
@@ -1061,6 +1088,7 @@ function stageText(years, counts) {
 function renderKeywordInsight(keyword) {
   const box = $("#keyword-insight");
   if (!box) return;
+  const timeline = state.keywordTimelines?.topics?.[keyword] || null;
   const hits = keywordMatchedPolicies(keyword);
   const years = state.trends.years;
   const counts = Object.fromEntries(years.map((y) => [y, 0]));
@@ -1085,7 +1113,7 @@ function renderKeywordInsight(keyword) {
       <article><span>峰值年份</span><strong>${peak[0]} · ${peak[1]}</strong></article>
     </div>
     <div class="insight-action-row">
-      <span>当前判断：<strong>${esc(stage.status)}</strong> · 近三年 ${stage.recent} 篇，前三年 ${stage.prev} 篇</span>
+      <span>当前判断：<strong>${esc(stage.status)}</strong> · 近三年 ${stage.recent} 篇，前三年 ${stage.prev} 篇${timeline ? " · 已生成专题脉络数据" : ""}</span>
       <button type="button" data-insight-action="browse">进入政策清单</button>
       <button type="button" data-insight-action="export">导出专题简报</button>
     </div>
@@ -1312,11 +1340,17 @@ function renderPolicyNetwork(keyword) {
       y: Math.round(155 + Math.sin(angle) * r),
     };
   });
-  const edges = [];
-  for (let i = 0; i < hits.length; i++) {
-    for (let j = i + 1; j < hits.length; j++) {
-      const reasons = relationReasons(hits[i], hits[j]);
-      if (reasons.length) edges.push({ i, j, reasons, w: reasons.length });
+  const idIndex = new Map(hits.map((p, i) => [p.id, i]));
+  const precomputed = (state.relationships?.edges || [])
+    .filter((e) => idIndex.has(e.source) && idIndex.has(e.target))
+    .map((e) => ({ i: idIndex.get(e.source), j: idIndex.get(e.target), reasons: e.reasons || [], w: e.score || 1 }));
+  const edges = precomputed.length ? precomputed : [];
+  if (!edges.length) {
+    for (let i = 0; i < hits.length; i++) {
+      for (let j = i + 1; j < hits.length; j++) {
+        const reasons = relationReasons(hits[i], hits[j]);
+        if (reasons.length) edges.push({ i, j, reasons, w: reasons.length });
+      }
     }
   }
   edges.sort((a, b) => b.w - a.w);
