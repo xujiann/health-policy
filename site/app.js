@@ -801,7 +801,17 @@ function renderQualityDashboard() {
       <button type="button" data-quality-filter="doc_missing">查看缺少文号</button>
       <button type="button" data-quality-filter="org_missing">查看缺少机关</button>
       <button type="button" data-quality-filter="doc_strict">仅看文号严格归口</button>
-    </div>`;
+    </div>
+    <details class="update-flow">
+      <summary>政策更新机制</summary>
+      <ol>
+        <li><strong>每日自动扫描</strong><span>GitHub Actions 每天 06:20 左右运行，默认扫描近45天政策文件库。</span></li>
+        <li><strong>增强手动更新</strong><span>发布前可运行近90天、每关键词8页扫描，用于补查延迟索引文件。</span></li>
+        <li><strong>清洗归类</strong><span>统一拆分正式政策、政策解读和排除项，只让正式政策进入统计与趋势。</span></li>
+        <li><strong>质量门禁</strong><span>检查文号、发文机关、官方链接、关系图谱和关键词脉络，异常时阻止发布。</span></li>
+        <li><strong>自动发布</strong><span>数据提交后 GitHub Pages 自动部署，页面通过 checked_at 显示最近检查时间。</span></li>
+      </ol>
+    </details>`;
   box.querySelectorAll("button[data-quality-filter]").forEach((b) =>
     b.addEventListener("click", () => {
       showView("browse");

@@ -159,6 +159,12 @@ main{min-height:60vh;padding-top:18px}
   padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer}
 .quality-dashboard-actions button:hover{background:#d1fae5;border-color:#99f6e4}
 .quality-alert{margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:9px 10px;font-size:12px;font-weight:700}
+.update-flow{margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.update-flow summary{cursor:pointer;color:var(--brand-d);font-size:13px;font-weight:800}
+.update-flow ol{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:10px 0 0;padding:0;list-style:none}
+.update-flow li{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:9px}
+.update-flow strong{display:block;color:#0f172a;font-size:12px}
+.update-flow span{display:block;margin-top:4px;color:#64748b;font-size:11px;line-height:1.45}
 .result-info{color:var(--muted);font-size:13px;margin-bottom:10px}
 
 .list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
@@ -479,6 +485,7 @@ main{min-height:60vh;padding-top:18px}
   .quality-dashboard-grid article{padding:9px}
   .quality-dashboard-grid strong{font-size:17px}
   .quality-dashboard-actions button{padding:7px 10px}
+  .update-flow ol{grid-template-columns:1fr;gap:7px}
   .toolbar input#q{flex:1 1 100%;min-width:0;font-size:14px;padding:10px 11px}
   .dept-filter-row{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;gap:7px;width:100%}
   .dept-filter-row .dept-filter-mode{grid-column:1/3}
