@@ -63,7 +63,30 @@ KEYWORD_GROUPS = {
     "公共卫生": ["公共卫生", "基本公共卫生", "爱国卫生", "健康城市"],
     "疾控": ["疾控", "疾病预防控制", "传染病", "免疫规划", "疫苗"],
     "医保支付": ["医保支付", "DRG", "DIP", "支付方式", "付费"],
+    "健康中国": ["健康中国", "健康优先", "健康中国行动", "健康素养", "健康促进"],
+    "国民健康规划": ["国民健康规划", "健康规划", "十五五", "十四五", "健康中国2030"],
+    "公立医院高质量发展": ["公立医院高质量发展", "公立医院改革", "绩效考核", "现代医院管理"],
+    "基层卫生": ["基层卫生", "基层医疗卫生", "乡镇卫生院", "社区卫生服务", "村卫生室"],
+    "家庭医生": ["家庭医生", "签约服务", "家庭病床"],
+    "医疗质量安全": ["医疗质量", "医疗安全", "质控", "诊疗规范", "合理医疗检查"],
+    "医用设备采购": ["医用设备", "大型医用设备", "集中采购", "医疗设备"],
+    "药品集采": ["药品集采", "带量采购", "药品耗材", "短缺药", "基本药物"],
+    "医保基金监管": ["医保基金监管", "欺诈骗保", "飞行检查", "基金使用"],
+    "医疗服务价格": ["医疗服务价格", "价格项目", "收费标准", "价格治理"],
+    "职业健康": ["职业健康", "职业病", "尘肺", "放射卫生"],
+    "老龄健康": ["老龄健康", "医养结合", "老年健康", "失能", "安宁疗护"],
+    "妇幼健康": ["妇幼健康", "母婴", "儿童健康", "出生缺陷", "辅助生殖"],
+    "中医药振兴": ["中医药振兴", "中医药", "中西医协同", "中医医院"],
+    "医疗人工智能": ["人工智能", "人工智能+医疗卫生", "智慧医疗", "医学人工智能"],
 }
+
+TIMELINE_PHASES = [
+    {"name": "医改启动与基层强基", "years": [2009, 2015], "focus": "基本制度、基层服务体系、基本公共卫生"},
+    {"name": "健康中国战略成型", "years": [2016, 2018], "focus": "健康优先、分级诊疗、资源布局"},
+    {"name": "专项行动与高质量发展", "years": [2019, 2021], "focus": "健康中国行动、公立医院绩效、疫情防控"},
+    {"name": "十四五深化治理", "years": [2022, 2025], "focus": "三医协同、资源均衡、数字治理、精细监管"},
+    {"name": "十五五前瞻部署", "years": [2026, 2030], "focus": "规划衔接、智能治理、体系韧性和连续服务"},
+]
 
 
 def load_json(path: str, default: Any) -> Any:
@@ -399,6 +422,41 @@ def build_keyword_timelines(policies: list[dict[str, Any]]) -> dict[str, Any]:
     for name, words in KEYWORD_GROUPS.items():
         hits = [p for p in policies if keyword_hits(p, words)]
         by_year = Counter(int(p["y"]) for p in hits if p.get("y"))
+        first_year = min(by_year) if by_year else None
+        latest_year = max(by_year) if by_year else None
+        peak_year, peak_count = max(by_year.items(), key=lambda x: x[1]) if by_year else (None, 0)
+        recent_3y = sum(by_year.get(y, 0) for y in years[-3:])
+        prev_3y = sum(by_year.get(y, 0) for y in years[-6:-3])
+        if recent_3y >= prev_3y and recent_3y >= 6:
+            status = "持续深化"
+            forecast = "后续重点可能继续转向制度衔接、评价考核和数据闭环。"
+        elif recent_3y and prev_3y > recent_3y:
+            status = "规范完善"
+            forecast = "后续重点可能从扩面部署转向标准化、质量控制和运行监管。"
+        elif latest_year and years and latest_year < years[-1] - 2:
+            status = "阶段沉淀"
+            forecast = "近期热度下降，建议关注是否在综合规划或相关主题中延续。"
+        else:
+            status = "观察跟踪"
+            forecast = "样本仍在积累，需结合新发文件和主管司局口径持续观察。"
+        phases = []
+        for phase in TIMELINE_PHASES:
+            start, end = phase["years"]
+            phase_hits = [p for p in hits if p.get("y") and start <= int(p["y"]) <= end]
+            phases.append({
+                **phase,
+                "count": len(phase_hits),
+                "representative": [
+                    {
+                        "id": p.get("id"),
+                        "date": p.get("d"),
+                        "title": p.get("t"),
+                        "docNo": p.get("pcv") or p.get("pc"),
+                        "url": p.get("u"),
+                    }
+                    for p in sorted(phase_hits, key=lambda p: p.get("d") or "", reverse=True)[:3]
+                ],
+            })
         top_themes = Counter(t for p in hits for t in (p.get("th") or [])).most_common(6)
         top_routes = Counter(
             " / ".join(
@@ -418,6 +476,15 @@ def build_keyword_timelines(policies: list[dict[str, Any]]) -> dict[str, Any]:
             "total": len(hits),
             "years": years,
             "series": [by_year.get(y, 0) for y in years],
+            "first_year": first_year,
+            "latest_year": latest_year,
+            "peak_year": peak_year,
+            "peak_count": peak_count,
+            "recent_3y": recent_3y,
+            "prev_3y": prev_3y,
+            "status": status,
+            "forecast": forecast,
+            "phases": phases,
             "top_themes": top_themes,
             "top_routes": top_routes,
             "recent": [

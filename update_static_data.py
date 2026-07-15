@@ -27,6 +27,30 @@ RECENT_KEYWORDS = [
     "医保目录", "医保支付", "长期护理保险", "生育", "托育",
 ]
 
+AGENCY_KEYWORDS = [
+    "国家卫生健康委", "国家医疗保障局", "国家疾病预防控制局", "国家中医药管理局",
+    "国家药监局", "国务院医改办", "全国爱卫办", "国家发展改革委 卫生健康",
+    "财政部 卫生健康", "民政部 医养结合", "教育部 学校卫生",
+]
+
+DOC_PREFIX_KEYWORDS = [
+    "国卫", "国卫办", "国卫医", "国卫基层", "国卫规划", "国卫财务",
+    "国卫体改", "国卫科教", "国卫药政", "国卫老龄", "国卫妇幼",
+    "国卫人口", "国卫职健", "国疾控", "国中医药", "医保发", "医保办发",
+    "医保函", "国药监", "财社", "人社部发", "民发", "教体艺",
+]
+
+SYSTEM_KEYWORDS = [
+    "健康中国", "国民健康规划", "十五五 国民健康", "医药卫生体制改革",
+    "三医协同", "公立医院高质量发展", "医疗质量", "医疗安全",
+    "区域医疗中心", "紧密型县域医共体", "家庭医生签约", "基本公共卫生",
+    "传染病防控", "免疫规划", "职业健康", "老龄健康", "医养结合",
+    "妇幼健康", "生育支持", "托育服务", "护理服务", "安宁疗护",
+    "互联网医疗", "数字健康", "健康医疗大数据", "人工智能 医疗卫生",
+    "医用设备", "集中采购", "药品耗材招采", "医保基金监管",
+    "医疗服务价格", "DRG DIP", "长期护理保险",
+]
+
 THEME_HINTS = {
     "医改综合": ["医改", "医药卫生体制改革", "三医联动", "改革重点任务"],
     "公立医院改革": ["公立医院", "绩效考核", "现代医院管理", "高质量发展"],
@@ -124,13 +148,21 @@ def item_to_policy(item, category):
     }
 
 
-def fetch_recent(days, pages, all_keywords=False):
+def discovery_keywords(mode="balanced", all_keywords=False):
+    if all_keywords or mode == "all":
+        return list(dict.fromkeys([*SEED_KEYWORDS, *AGENCY_KEYWORDS, *DOC_PREFIX_KEYWORDS, *SYSTEM_KEYWORDS]))
+    if mode == "broad":
+        return list(dict.fromkeys([*RECENT_KEYWORDS, *AGENCY_KEYWORDS, *DOC_PREFIX_KEYWORDS, *SYSTEM_KEYWORDS]))
+    return list(dict.fromkeys([*RECENT_KEYWORDS, *AGENCY_KEYWORDS, *SYSTEM_KEYWORDS[:18]]))
+
+
+def fetch_recent(days, pages, all_keywords=False, mode="balanced"):
     cutoff = dt.date.today() - dt.timedelta(days=days)
     session = requests.Session()
     session.trust_env = False
     session.headers.update(UA)
     found = {}
-    keywords = SEED_KEYWORDS if all_keywords else RECENT_KEYWORDS
+    keywords = discovery_keywords(mode, all_keywords=all_keywords)
     for kw in keywords:
         for page in range(1, pages + 1):
             data = api_query(session, kw, page)
@@ -160,6 +192,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=45)
     parser.add_argument("--pages", type=int, default=3)
+    parser.add_argument("--mode", choices=["balanced", "broad", "all"], default="balanced",
+                        help="discovery breadth; balanced is daily-safe, broad is deeper, all also scans every seed keyword")
     parser.add_argument("--all-keywords", action="store_true", help="scan every seed keyword; slower")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -169,7 +203,7 @@ def main():
     excluded = load_json("excluded.json") if os.path.exists(os.path.join(DATA, "excluded.json")) else []
     previous_meta = load_json("meta.json")
     by_id = {p["id"]: p for p in [*policies, *interpretations, *excluded]}
-    recent = fetch_recent(args.days, args.pages, all_keywords=args.all_keywords)
+    recent = fetch_recent(args.days, args.pages, all_keywords=args.all_keywords, mode=args.mode)
     new_items = [p for pid, p in recent.items() if pid not in by_id]
     if new_items:
         by_id.update({p["id"]: p for p in new_items})
@@ -206,6 +240,8 @@ def main():
         "excluded_total": outputs["meta"].get("excluded_total"),
         "days": args.days,
         "pages": args.pages,
+        "mode": args.mode,
+        "keyword_count": len(discovery_keywords(args.mode, all_keywords=args.all_keywords)),
         "all_keywords": args.all_keywords,
         "dry_run": args.dry_run,
         "checked_at": (outputs.get("meta") or meta).get("checked_at"),

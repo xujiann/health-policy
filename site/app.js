@@ -1128,9 +1128,23 @@ function initAnalysisLab() {
   const input = $("#insight-keyword");
   const run = $("#insight-run");
   if (!input || !run) return;
+  const topicPick = $("#insight-topic");
+  if (topicPick) {
+    Object.keys(state.keywordTimelines?.topics || {}).forEach((name) => {
+      const topic = state.keywordTimelines.topics[name];
+      topicPick.insertAdjacentHTML("beforeend", `<option value="${esc(name)}">${esc(name)}（${topic.total || 0}）</option>`);
+    });
+    topicPick.addEventListener("change", () => {
+      if (!topicPick.value) return;
+      input.value = topicPick.value;
+      renderAnalysisLab(topicPick.value);
+      addCustomKeyword(topicPick.value);
+    });
+  }
   const apply = () => {
     const value = input.value.trim() || "医共体";
     input.value = value;
+    if (topicPick) topicPick.value = state.keywordTimelines?.topics?.[value] ? value : "";
     renderAnalysisLab(value);
     addCustomKeyword(value);
   };
@@ -1158,13 +1172,17 @@ const KEYWORD_SYNONYMS = {
   "分级诊疗": ["医联体", "医共体", "医疗联合体", "双向转诊"],
   "医保支付": ["DRG", "DIP", "支付方式", "按病种付费", "总额预算"],
   "数字健康": ["信息化", "互联网医疗", "远程医疗", "健康医疗大数据", "智慧医院"],
+  "医疗人工智能": ["人工智能+医疗卫生", "智慧医疗", "医学人工智能"],
+  "医用设备采购": ["医用设备", "大型医用设备", "设备集中采购", "医疗设备"],
+  "国民健康规划": ["健康规划", "十五五", "十四五", "健康中国2030"],
 };
 
 const POLICY_PHASES = [
   { name: "医改奠基期", years: [2009, 2015], note: "以基本制度、服务体系和基层能力建设为主" },
   { name: "战略成型期", years: [2016, 2018], note: "健康中国、分级诊疗和资源布局进入系统部署" },
   { name: "行动扩展期", years: [2019, 2021], note: "专项行动、疫情防控、绩效评价和高质量发展叠加推进" },
-  { name: "深化治理期", years: [2022, 2026], note: "资源均衡、数字治理、三医协同和精细化监管加强" },
+  { name: "十四五深化治理期", years: [2022, 2025], note: "资源均衡、数字治理、三医协同和精细化监管加强" },
+  { name: "十五五前瞻部署期", years: [2026, 2030], note: "规划衔接、智能治理、体系韧性和连续服务成为重点" },
 ];
 
 function expandWords(words) {
@@ -1227,6 +1245,14 @@ function renderKeywordInsight(keyword) {
   const routes = groupCount(hits.filter((p) => p.tx?.bureauName), (p) =>
     [p.tx.ministryName, p.tx.bureauName].filter(Boolean).join(" / ")).slice(0, 5);
   const peak = years.map((y) => [y, counts[y] || 0]).sort((a, b) => b[1] - a[1])[0] || ["-", 0];
+  const displayStage = timeline ? {
+    first: timeline.first_year || stage.first,
+    latest: timeline.latest_year || stage.latest,
+    recent: timeline.recent_3y ?? stage.recent,
+    prev: timeline.prev_3y ?? stage.prev,
+    status: timeline.status || stage.status,
+  } : stage;
+  const displayPeak = timeline?.peak_year ? [timeline.peak_year, timeline.peak_count || 0] : peak;
   const yearly = years.map((y) => {
     const n = counts[y] || 0;
     return `<button type="button" class="${n ? "has-hit" : ""}" data-year="${y}" data-theme="" style="--h:${Math.max(4, Math.round(n / max * 100))}%"><span>${n}</span><em>${y}</em></button>`;
@@ -1235,12 +1261,12 @@ function renderKeywordInsight(keyword) {
   box.innerHTML = `
     <div class="insight-stats">
       <article><span>命中文件</span><strong>${hits.length}</strong></article>
-      <article><span>首次出现</span><strong>${stage.first}</strong></article>
-      <article><span>最近年份</span><strong>${stage.latest}</strong></article>
-      <article><span>峰值年份</span><strong>${peak[0]} · ${peak[1]}</strong></article>
+      <article><span>首次出现</span><strong>${displayStage.first}</strong></article>
+      <article><span>最近年份</span><strong>${displayStage.latest}</strong></article>
+      <article><span>峰值年份</span><strong>${displayPeak[0]} · ${displayPeak[1]}</strong></article>
     </div>
     <div class="insight-action-row">
-      <span>当前判断：<strong>${esc(stage.status)}</strong> · 近三年 ${stage.recent} 篇，前三年 ${stage.prev} 篇${timeline ? " · 已生成专题脉络数据" : ""}</span>
+      <span>当前判断：<strong>${esc(displayStage.status)}</strong> · 近三年 ${displayStage.recent} 篇，前三年 ${displayStage.prev} 篇${timeline ? ` · ${esc(timeline.forecast || "已生成专题脉络数据")}` : ""}</span>
       <button type="button" data-insight-action="browse">进入政策清单</button>
       <button type="button" data-insight-action="export">导出专题简报</button>
     </div>

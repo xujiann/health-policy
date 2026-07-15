@@ -278,7 +278,9 @@ main{min-height:60vh;padding-top:18px}
 .analysis-block-head h3{font-size:17px}
 .analysis-head p{margin:0;color:var(--muted);font-size:13px;text-align:right;max-width:420px}
 .analysis-search{display:flex;gap:8px;align-items:center;min-width:min(420px,48%)}
-.analysis-search input{flex:1;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+.analysis-search input,.analysis-search select{min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff}
+.analysis-search input{flex:1}
+.analysis-search select{max-width:172px;color:#0f3f38;font-weight:700}
 .analysis-search button{border:0;border-radius:8px;background:var(--brand);color:#fff;font-weight:800;padding:9px 14px;cursor:pointer}
 .analysis-search button:hover{background:var(--brand-d)}
 .keyword-insight{display:grid;gap:12px}
@@ -311,7 +313,7 @@ main{min-height:60vh;padding-top:18px}
 .insight-columns div:first-of-type{border-top:0}
 .insight-columns span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155;font-size:13px}
 .insight-columns em{font-style:normal;color:#0f766e;font-size:12px;font-weight:800}
-.phase-timeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.phase-timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
 .phase-timeline article{display:grid;gap:7px;background:#fbfffd;border:1px solid #ccefe3;border-radius:10px;padding:12px}
 .phase-timeline article div{display:flex;justify-content:space-between;gap:8px;align-items:start}
 .phase-timeline span{color:#0f766e;font-size:12px;font-weight:800}
@@ -532,6 +534,7 @@ main{min-height:60vh;padding-top:18px}
   .analysis-head,.analysis-block-head{display:grid;gap:8px}
   .analysis-head p{text-align:left;max-width:none}
   .analysis-search{min-width:0;width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .analysis-search select{grid-column:1 / -1;max-width:none;font-size:14px;padding:10px}
   .analysis-search input{font-size:14px;padding:10px}
   .analysis-search button{padding:10px 13px}
   .insight-stats{grid-template-columns:repeat(2,minmax(0,1fr))}

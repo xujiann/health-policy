@@ -13,7 +13,11 @@ on:
       pages:
         description: "Pages per keyword"
         required: false
-        default: "3"
+        default: "5"
+      mode:
+        description: "Discovery mode: balanced, broad, or all"
+        required: false
+        default: "balanced"
       all_keywords:
         description: "Scan every seed keyword, slower but broader"
         required: false
@@ -44,10 +48,11 @@ jobs:
       - name: Update static data
         env:
           DAYS: ${{ github.event.inputs.days || '45' }}
-          PAGES: ${{ github.event.inputs.pages || '3' }}
+          PAGES: ${{ github.event.inputs.pages || '5' }}
+          MODE: ${{ github.event.inputs.mode || 'balanced' }}
           ALL_KEYWORDS: ${{ github.event.inputs.all_keywords || 'false' }}
         run: |
-          args=(--days "$DAYS" --pages "$PAGES")
+          args=(--days "$DAYS" --pages "$PAGES" --mode "$MODE")
           if [[ "$ALL_KEYWORDS" == "true" ]]; then
             args+=(--all-keywords)
           fi
