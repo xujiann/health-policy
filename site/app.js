@@ -236,7 +236,10 @@ function initTabs() {
       showView(b.dataset.view);
     });
   });
-  if (location.hash === "#trend") showView("trend");
+  if (location.hash === "#trend" || location.hash === "#plan-tasks") showView("trend");
+  if (location.hash === "#plan-tasks") {
+    setTimeout(() => $("#plan-tasks")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+  }
 }
 
 function showView(v) {
@@ -1088,6 +1091,99 @@ state.showPresets = true;
 state.relMode = "all"; // 'all' = 标题+摘要；'strong' = 仅标题强相关
 state.viewMode = "count"; // 'count' 数量折线 | 'share' 占比堆叠
 
+const PLAN_TASKS = [
+  {
+    id: "life-cycle",
+    stage: "全生命周期健康服务",
+    task: "完善妇幼、儿童、老年、职业健康与慢病连续服务",
+    lead: [
+      ["nhc_maternal", "妇女卫生处"],
+      ["nhc_maternal", "儿童卫生处"],
+      ["nhc_ageing", "健康服务处"],
+      ["nhc_ageing", "医养结合处"],
+      ["nhc_occupational", "预防处"],
+    ],
+    levers: ["出生缺陷防治", "儿童健康服务", "老年健康服务", "医养结合", "职业健康保护"],
+    keywords: ["妇幼", "儿童健康", "老年健康", "医养结合", "职业健康", "慢病管理"],
+    output: "形成按人群分层、按生命周期衔接的健康服务任务清单。"
+  },
+  {
+    id: "public-health",
+    stage: "公共卫生安全",
+    task: "健全监测预警、免疫规划、应急处置和重大疾病防控体系",
+    lead: [
+      ["cdc_monitoring", "传染病监测处"],
+      ["cdc_monitoring", "预警处"],
+      ["cdc_emergency", "应急处置处"],
+      ["cdc_immunization", "免疫规划处"],
+      ["nhc_emergency", "公共卫生医疗管理处"],
+    ],
+    levers: ["传染病监测", "疫情预警", "免疫规划", "应急处置", "重大疾病医疗管理"],
+    keywords: ["疾控", "传染病", "监测预警", "免疫规划", "应急处置", "公共卫生"],
+    output: "明确监测、预警、处置、救治之间的责任链条。"
+  },
+  {
+    id: "integrated-care",
+    stage: "医疗资源均衡布局",
+    task: "推进区域医疗中心、医共体、基层能力和分级诊疗协同",
+    lead: [
+      ["nhc_planning", "发展规划处"],
+      ["nhc_medical", "医疗资源处"],
+      ["nhc_medical", "医疗机构处"],
+      ["nhc_primary", "运行评价处"],
+      ["nhc_primary", "家庭医生处"],
+      ["nhc_reform", "综合协调处"],
+    ],
+    levers: ["资源规划", "区域医疗中心", "县域医共体", "基层运行评价", "家庭医生签约"],
+    keywords: ["区域医疗中心", "医疗资源", "分级诊疗", "医共体", "基层", "家庭医生"],
+    output: "把资源配置、体系建设和基层落地统一到地市、县域单元。"
+  },
+  {
+    id: "quality-reform",
+    stage: "医疗服务高质量发展",
+    task: "提升医疗质量安全、合理用药、护理康复和公立医院改革绩效",
+    lead: [
+      ["nhc_medical", "医疗管理处"],
+      ["nhc_medical", "护理与康复处"],
+      ["nhc_drug", "药物政策处"],
+      ["nhc_reform", "公立医院改革处"],
+      ["nhc_finance", "经济管理处"],
+    ],
+    levers: ["医疗质量安全", "检查检验互认", "合理用药", "护理康复", "公立医院绩效"],
+    keywords: ["医疗质量", "医疗安全", "合理医疗检查", "合理用药", "护理", "公立医院"],
+    output: "将高质量发展任务转化为质量、效率、公益性和绩效指标。"
+  },
+  {
+    id: "medical-security",
+    stage: "医保支付与价格治理",
+    task: "完善医保目录、支付方式、价格项目、集采和基金监管协同",
+    lead: [
+      ["nhsa_services", "医保目录处"],
+      ["nhsa_services", "支付方式改革处"],
+      ["nhsa_price", "医疗服务价格处"],
+      ["nhsa_price", "药品耗材招采处"],
+      ["nhsa_fund", "基金监管处"],
+    ],
+    levers: ["医保目录", "DRG/DIP", "医疗服务价格", "药品耗材集采", "基金监管"],
+    keywords: ["医保目录", "DRG", "DIP", "医疗服务价格", "集采", "基金监管"],
+    output: "把医保战略购买、价格改革和基金安全联动为同一任务包。"
+  },
+  {
+    id: "digital-governance",
+    stage: "数字健康治理",
+    task: "推进全民健康信息平台、数据治理、互联互通和智能化应用",
+    lead: [
+      ["nhc_planning", "信息统计处"],
+      ["nhsa_planning", "信息化处"],
+      ["cdc_monitoring", "风险评估处"],
+      ["nhc_science", "项目一处"],
+    ],
+    levers: ["全民健康信息平台", "医保信息平台", "监测数据治理", "互联互通", "人工智能应用"],
+    keywords: ["信息化", "健康医疗大数据", "互联互通", "智慧医院", "人工智能", "统计"],
+    output: "形成数据底座、业务协同、治理规则和智能应用的建设路径。"
+  },
+];
+
 function initTrend() {
   const pick = $("#theme-pick");
   Object.keys(state.trends.themes).forEach((t) =>
@@ -1122,6 +1218,7 @@ function initTrend() {
     }));
   initAnalysisLab();
   renderAnalysisLab();
+  renderPlanTasks();
 }
 
 function initAnalysisLab() {
@@ -1460,6 +1557,120 @@ function renderDeptThemeMatrix() {
       renderOfficeOptions();
       applyFilters();
     }));
+}
+
+function taxonomyRoute(bureauId, office) {
+  const tx = window.POLICY_TAXONOMY;
+  const bureau = tx?.bureaus?.find((item) => item.id === bureauId);
+  const ministry = tx?.ministries?.find((item) => item.id === bureau?.ministry);
+  return {
+    bureauId,
+    office,
+    bureauName: bureau?.name || bureauId,
+    ministryId: bureau?.ministry || "",
+    ministryName: ministry?.name || "",
+    officeExists: Boolean(tx?.officesFor?.(bureauId)?.includes(office)),
+  };
+}
+
+function planTaskPolicies(task) {
+  const words = expandWords(task.keywords);
+  const byId = new Map();
+  state.policies.forEach((p) => {
+    const text = policyText(p).toLowerCase();
+    const wordHit = words.some((w) => text.includes(w.toLowerCase()));
+    const officeHit = task.lead.some(([bureauId, office]) => p.tx?.bureauId === bureauId && p.tx?.office === office);
+    if (wordHit || officeHit) byId.set(p.id, p);
+  });
+  return [...byId.values()].sort((a, b) => b.d.localeCompare(a.d));
+}
+
+function applyOfficeRouteFilter(bureauId, office) {
+  const route = taxonomyRoute(bureauId, office);
+  if (!route.ministryId) return;
+  showView("browse");
+  resetBrowseControls();
+  $("#f-route-mode").value = "doc_strict";
+  $("#f-ministry").value = route.ministryId;
+  renderBureauOptions();
+  if ([...$("#f-bureau").options].some((option) => option.value === bureauId)) {
+    $("#f-bureau").value = bureauId;
+  }
+  renderOfficeOptions();
+  if ([...$("#f-office").options].some((option) => option.value === office)) {
+    $("#f-office").value = office;
+  } else {
+    $("#q").value = office;
+  }
+  applyFilters();
+  $("#filter-details").open = true;
+  $("#view-browse")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function applyTaskKeywordFilter(taskId) {
+  const task = PLAN_TASKS.find((item) => item.id === taskId);
+  if (!task) return;
+  showView("browse");
+  resetBrowseControls();
+  $("#q").value = task.keywords[0] || task.stage;
+  applyFilters();
+  $("#view-browse")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function renderPlanTasks() {
+  const overview = $("#plan-task-overview");
+  const board = $("#plan-task-board");
+  if (!overview || !board) return;
+  const enriched = PLAN_TASKS.map((task) => {
+    const policies = planTaskPolicies(task);
+    const routes = task.lead.map(([bureauId, office]) => taxonomyRoute(bureauId, office));
+    return { ...task, policies, routes };
+  });
+  const bureauCount = new Set(enriched.flatMap((task) => task.routes.map((route) => route.bureauId))).size;
+  const officeCount = new Set(enriched.flatMap((task) => task.routes.map((route) => `${route.bureauId}:${route.office}`))).size;
+  const evidenceCount = new Set(enriched.flatMap((task) => task.policies.map((p) => p.id))).size;
+  overview.innerHTML = [
+    ["重点任务", PLAN_TASKS.length],
+    ["牵头司局", bureauCount],
+    ["落实处室", officeCount],
+    ["证据文件", evidenceCount],
+  ].map(([label, value]) => `<article><span>${esc(label)}</span><strong>${esc(String(value))}</strong></article>`).join("");
+  board.innerHTML = enriched.map((task) => {
+    const latest = task.policies.slice(0, 3);
+    return `
+      <article class="task-card">
+        <div class="task-card-head">
+          <span>${esc(task.stage)}</span>
+          <button type="button" data-task-keyword="${esc(task.id)}">看政策变化</button>
+        </div>
+        <h3>${esc(task.task)}</h3>
+        <p>${esc(task.output)}</p>
+        <div class="task-levers">${task.levers.map((lever) => `<em>${esc(lever)}</em>`).join("")}</div>
+        <div class="task-routes">
+          ${task.routes.map((route) => `
+            <button type="button" data-task-bureau="${esc(route.bureauId)}" data-task-office="${esc(route.office)}">
+              <span>${esc(route.bureauName)}</span>
+              <strong>${esc(route.office)}</strong>
+            </button>
+          `).join("")}
+        </div>
+        <div class="task-evidence">
+          <strong>相关文件 ${task.policies.length} 篇</strong>
+          ${latest.length ? latest.map((p) => `
+            <a href="${esc(p.u)}" target="_blank" rel="noopener">
+              <span>${esc(p.d || String(p.y || ""))}</span>
+              <em>${esc(shortTitle(p.t))}</em>
+            </a>
+          `).join("") : `<p class="muted">暂无可匹配的政策文件。</p>`}
+        </div>
+      </article>`;
+  }).join("");
+  board.querySelectorAll("button[data-task-bureau]").forEach((button) => {
+    button.addEventListener("click", () => applyOfficeRouteFilter(button.dataset.taskBureau, button.dataset.taskOffice));
+  });
+  board.querySelectorAll("button[data-task-keyword]").forEach((button) => {
+    button.addEventListener("click", () => applyTaskKeywordFilter(button.dataset.taskKeyword));
+  });
 }
 
 function relationReasons(a, b) {

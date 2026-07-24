@@ -364,6 +364,30 @@ main{min-height:60vh;padding-top:18px}
 .network-list li{display:grid;gap:2px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#f8fafc}
 .network-list span{color:#0f766e;font-size:12px;font-weight:800}
 .network-list strong,.network-list em{font-style:normal;color:#334155;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plan-task-lab{margin-top:14px}
+.task-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:4px 0 14px}
+.task-overview article{border:1px solid #ccefe3;background:#f8fffd;border-radius:10px;padding:11px 12px}
+.task-overview span{display:block;color:#64748b;font-size:12px;margin-bottom:4px}
+.task-overview strong{color:#0b6e5f;font-size:22px;line-height:1}
+.task-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.task-card{display:grid;gap:10px;align-content:start;border:1px solid var(--line);background:#fff;border-radius:10px;padding:14px;min-width:0}
+.task-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.task-card-head span{color:#0f766e;font-size:12px;font-weight:800}
+.task-card-head button{border:1px solid #b7e4d7;background:#ecfdf5;color:#0b6e5f;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.task-card h3{margin:0;color:#0f3f38;font-size:17px;line-height:1.35}
+.task-card p{margin:0;color:#475569;font-size:13px;line-height:1.65}
+.task-levers{display:flex;flex-wrap:wrap;gap:6px}
+.task-levers em{font-style:normal;color:#24544e;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;padding:3px 8px;font-size:12px}
+.task-routes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.task-routes button{display:grid;gap:2px;text-align:left;border:1px solid #d9efe8;background:#fbfffd;border-radius:8px;padding:8px 9px;cursor:pointer;min-width:0}
+.task-routes button:hover,.task-card-head button:hover{border-color:#0f766e;box-shadow:0 6px 16px rgba(15,118,110,.10)}
+.task-routes span{color:#64748b;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task-routes strong{color:#0f3f38;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task-evidence{display:grid;gap:6px;border-top:1px dashed #dbe7e4;padding-top:10px}
+.task-evidence>strong{color:#0f3f38;font-size:13px}
+.task-evidence a{display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;align-items:center;text-decoration:none;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px}
+.task-evidence a span{color:#0f766e;font-size:12px;font-weight:800}
+.task-evidence a em{font-style:normal;color:#334155;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .about-page{padding:18px 24px 24px}
 .about-hero{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:16px}
@@ -557,6 +581,14 @@ main{min-height:60vh;padding-top:18px}
   .matrix-head,.matrix-row{grid-template-columns:108px repeat(8,48px);min-width:510px}
   .policy-network{grid-template-columns:1fr}
   .policy-network svg{min-height:200px}
+  .task-overview{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .task-board{grid-template-columns:1fr}
+  .task-card{padding:12px;gap:9px}
+  .task-card-head{display:grid;grid-template-columns:1fr auto;align-items:center}
+  .task-card h3{font-size:16px}
+  .task-routes{grid-template-columns:1fr}
+  .task-evidence a{grid-template-columns:1fr;gap:3px}
+  .task-evidence a em{white-space:normal}
   .about-page{padding:14px 14px 20px}
   .about-hero h2{font-size:22px}
   .wechat-qr{grid-template-columns:1fr;justify-items:center;text-align:left;padding:14px;gap:12px}
