@@ -194,11 +194,18 @@ function buildRuntimeMeta(policies, sourceMeta) {
     (p.th || []).forEach((th) => { themeCount[th] = (themeCount[th] || 0) + 1; });
   });
   const years = Object.keys(yearCount).map(Number).sort((a, b) => a - b);
+  const attachedInterpretations = policies.reduce((sum, p) => sum + (p.interps?.length || 0), 0);
+  const totalInterpretations = Math.max(
+    Number(sourceMeta?.interpretation_total || 0),
+    state.interpretations.length || 0,
+    attachedInterpretations
+  );
   return {
     ...sourceMeta,
     total: policies.length,
     policy_total: policies.length,
-    interpretation_total: policies.reduce((sum, p) => sum + (p.interps?.length || 0), 0),
+    interpretation_total: totalInterpretations,
+    interpretation_attached_total: attachedInterpretations,
     excluded_total: state.excluded.length,
     year_range: years.length ? [years[0], years[years.length - 1]] : [],
     cat_count: catCount,
@@ -595,7 +602,21 @@ function latestPolicyDate() {
 
 function shortDateTime(value) {
   if (!value) return "-";
-  return String(value).replace("T", " ").slice(0, 16);
+  const text = String(value);
+  const input = /(?:Z|[+-]\d{2}:?\d{2})$/.test(text) ? text : text + "Z";
+  const date = new Date(input);
+  if (Number.isNaN(date.getTime())) return text.replace("T", " ").slice(0, 16);
+  const parts = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const pick = (type) => parts.find((part) => part.type === type)?.value || "";
+  return `${pick("year")}-${pick("month")}-${pick("day")} ${pick("hour")}:${pick("minute")}`;
 }
 
 function lastCheckedAt(meta = state.meta) {
@@ -607,6 +628,7 @@ function initSummaryPanel() {
   $("#summary-panel").classList.remove("hidden");
   $("#stat-policy-total").textContent = m.policy_total || m.total;
   $("#stat-interpretation-total").textContent = m.interpretation_total || 0;
+  $("#stat-interpretation-total").title = `已匹配到政策文件：${m.interpretation_attached_total || 0} 条`;
   $("#stat-latest-date").textContent = latestPolicyDate();
   $("#stat-checked-at").textContent = lastCheckedAt(m);
   renderLatestPanel();
@@ -782,6 +804,8 @@ function renderQualityDashboard() {
   const strict = (m.route_count || {})["文号归口"] || 0;
   const inferred = (m.route_count || {})["机关归口"] || 0;
   const excludedAll = (m.excluded_total || 0) + (state.interpretations?.length || 0);
+  const interpretationTotal = m.interpretation_total || state.interpretations?.length || 0;
+  const interpretationAttached = m.interpretation_attached_total || 0;
   box.classList.remove("hidden");
   box.innerHTML = `
     <div class="quality-dashboard-head">
@@ -793,6 +817,7 @@ function renderQualityDashboard() {
     </div>
     <div class="quality-dashboard-grid">
       ${qualityCard("政策文件", total, "清洗后进入分析的正式政策文件")}
+      ${qualityCard("政策解读库", interpretationTotal, `${interpretationAttached} 条已匹配到政策文件`)}
       ${qualityCard("排除内容", excludedAll, "解读、新闻、列表页、客户端下载页等不作为独立政策收录")}
       ${qualityCard("文号覆盖", pct(docKnown, total), `${docKnown}/${total}`)}
       ${qualityCard("机关覆盖", pct(orgKnown, total), `${orgKnown}/${total}`)}
